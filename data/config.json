@@ -1,0 +1,23 @@
+{
+  "BOT_NAME": "Urooj Choudhary",
+  "BOT_OWNER": "Urooj Choudhary",
+  "AUTOREAD": "true",
+  "AUTOTYPE": "true",
+  "AUTORECORD": "true",
+  "AUTORECORDTYPE": "true",
+  "AUTO_STATUS_REACT": "true",
+  "AUTO_STATUS_REPLY": "true",
+  "AUTO_STATUS_MSG": "Viewed By Urooj Choudhary",
+  "ANTICALL": "true",
+  "BUTTONMODE": "true",
+  "LANGUAGE": "en",
+  "PREFIX": ".",
+  "ALWAYSONLINE": "true",
+  "AUTO_REAUTH_ENABLED": "true",
+  "HAYA_AI_ENABLED": "true",
+  "HAYA_IMAGE_SENDING_ENABLED": "true",
+  "HAYA_VOICE_TRANSCRIPTION_ENABLED": "true",
+  "HAYA_VOICE_REPLY_ENABLED": "true",
+  "HAYA_BUSY_AUTO_TRIGGER": "true",
+  "HAYA_NIGHT_MODE_ENABLED": "true"
+}

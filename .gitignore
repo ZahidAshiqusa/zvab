@@ -1,0 +1,44 @@
+# Dependencies & Internal Metadata
+node_modules/
+.npm/
+.git/
+.aistudio/
+bun.lock
+
+# Environment and sensitive keys
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.z.env
+
+# WhatsApp Baileys session and auth state
+session/
+sessions/
+auth_info/
+*.session
+*.session-journal
+
+# SQLite local databases and write-ahead logs
+*.db
+*.db-wal
+*.db-shm
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.sqlite
+data/*.sqlite-*
+data/vault/
+data/urooj_suite.db
+data/urooj_suite.db-wal
+data/urooj_suite.db-shm
+
+# Build and temporary files
+dist/
+build/
+temp/
+tmp/
+.cache/
+.DS_Store
+_backups/
+eplugins/

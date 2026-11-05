@@ -1,0 +1,11 @@
+{
+  "name": "Urooj Choudhary - Haya AI WhatsApp Suite",
+  "description": "Production WhatsApp Automation Suite with Voice Note Status Uploader, Anti-Delete Recovery, Busy Queue, and Pakistan Time Night/Morning Scheduler.",
+  "prompt": "This app was imported from GitHub repository ZahidAshiqusa/Queen-Riam.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
