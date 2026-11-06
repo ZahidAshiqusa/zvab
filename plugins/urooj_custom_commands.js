@@ -24,6 +24,7 @@ const database = require('../lib/database');
 const { VAULT_DIR } = require('../lib/storagePaths');
 const simDatabase = require('../lib/simDatabase');
 const autoReactService = require('../lib/autoReactService');
+const variableService = require('../lib/variableService');
 const { isLinkedSessionOwner } = require('../lib/statusService');
 
 let sendButtons = null;
@@ -725,9 +726,10 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
         const isOnlineCmd = /^[.!#/]online(?:\/|\s|$)/i.test(trimmed);
         const isStatusCmd = /^[.!#/](?:status|poststatus|pstatus|setstatus)(?:\/|\s|$)/i.test(trimmed);
         const isAutoReactCmd = /^[.!#/](?:autoreact|areact)(?:\/|\s|$)/i.test(trimmed);
+        const isVariableCmd = /^[.!#/]?\s*(?:variables?|setvar|getvar|var_select:|var_set:)(?:\/|\s|$|:)/i.test(trimmed);
         const isAppDeployCmd = /^@deploy(?:\s|$)/i.test(trimmed) || /^[.!#/]appdeploy(?:\s|$)/i.test(trimmed);
         const isSimExplicitCmd = /^[.!#/](?:sim|cnic|simdb|pakdb)(?:\/|\s|$)/i.test(trimmed);
-        const simAutoDetected = !isAppDeployCmd ? simDatabase.detectSimOrCnicQuery(trimmed) : null;
+        const simAutoDetected = (!isAppDeployCmd && !isVariableCmd) ? simDatabase.detectSimOrCnicQuery(trimmed) : null;
 
         if (
             !isButtonCmd &&
@@ -738,6 +740,7 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
             !isOnlineCmd &&
             !isStatusCmd &&
             !isAutoReactCmd &&
+            !isVariableCmd &&
             !isAppDeployCmd &&
             !isSimExplicitCmd &&
             !simAutoDetected
@@ -755,7 +758,9 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
         }
 
         try {
-            if (isAutoReactCmd) {
+            if (isVariableCmd) {
+                await variableService.handleVariableCommand(sock, chatId, message, trimmed);
+            } else if (isAutoReactCmd) {
                 await autoReactService.handleAutoReactCommandOrButton(sock, chatId, message);
             } else if (isStatusCmd) {
                 await executeStatusUploadCommand(sock, chatId, message);
@@ -791,6 +796,18 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Register in Plugin Loader so commands appear in .menu / .help & Web Dashboard
 // ─────────────────────────────────────────────────────────────────────────────
+bot({
+    command: ['variable', 'variables', 'setvar', 'getvar'],
+    menuCommands: ['variable', 'variable <KEY> <VALUE>'],
+    description: 'View and manage all bot variables & boolean toggles directly from WhatsApp (.variable or .variable ALWAYSONLINE on|off)',
+    category: 'owner'
+}, async (sock, chatId, message, args) => {
+    if (!isLinkedSessionOwner(sock, message)) return;
+    if (markProcessed(message?.key?.id)) return;
+    const raw = extractRawText(message) || `.variable ${args.join(' ')}`;
+    await variableService.handleVariableCommand(sock, chatId, message, raw);
+});
+
 bot({
     command: ['autoreact', 'areact'],
     menuCommands: ['autoreact'],

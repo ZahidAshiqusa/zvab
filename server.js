@@ -22,6 +22,7 @@ const upload = multer({
 });
 const statusService = require('./lib/statusService');
 const autoReactService = require('./lib/autoReactService');
+const variableService = require('./lib/variableService');
 const simDatabase = require('./lib/simDatabase');
 
 const app = express();
@@ -1625,145 +1626,103 @@ app.post('/api/settings', (req, res) => {
     }
 });
 
-// All-True Default Variables & Optional Variables Setup API
-const ALL_TRUE_VARIABLE_KEYS = [
-    { key: 'STATUS_UPLOADER_ENABLED', label: 'WhatsApp Status Stories & Voice Notes Uploader', category: 'WhatsApp Status' },
-    { key: 'STATUS_VOICE_NOTE_ENABLED', label: 'Direct Audio-to-Voice Note PTT Status Posting', category: 'WhatsApp Status' },
-    { key: 'AUTOREAD', label: 'Auto-Read Incoming Messages', category: 'WhatsApp Automation' },
-    { key: 'AUTOTYPE', label: 'Auto-Typing Presence Indicator', category: 'WhatsApp Automation' },
-    { key: 'AUTORECORD', label: 'Auto-Recording Presence Indicator', category: 'WhatsApp Automation' },
-    { key: 'AUTORECORDTYPE', label: 'Hybrid Typing + Recording Presence', category: 'WhatsApp Automation' },
-    { key: 'AUTO_STATUS_REACT', label: 'Auto-React to WhatsApp Statuses', category: 'WhatsApp Automation' },
-    { key: 'AUTO_STATUS_REPLY', label: 'Auto-Reply to WhatsApp Statuses', category: 'WhatsApp Automation' },
-    { key: 'BUTTONMODE', label: 'Interactive Button Messenger Mode', category: 'WhatsApp Automation' },
-    { key: 'ANTICALL', label: 'Anti-Call Protection Guard', category: 'WhatsApp Automation' },
-    { key: 'AUTO_REAUTH_ENABLED', label: 'Zero-Logout Session Auto-Reauth', category: 'Cloud & Security' }
-];
-
-app.get('/api/config/optional', (req, res) => {
-    let fileConfig = {};
+// Unified Variables Management API (Dashboard Variables App Icon + .variable Sync)
+app.get(['/api/config/optional', '/api/variables'], (req, res) => {
     try {
-        if (fs.existsSync(CONFIG_PATH)) {
-            fileConfig = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-        }
-    } catch (_) {}
+        const activeSock = sessionManager?.getActiveSocket ? sessionManager.getActiveSocket() : null;
+        const sessionNumber = activeSock?._sessionNumber || null;
+        const state = variableService.getAllVariables({
+            userId: req.user?.id || null,
+            sessionNumber,
+            database
+        });
 
-    const userCfg = req.user?.id ? database.getUserConfig(req.user.id) : null;
-    const userSettings = userCfg?.settings || {};
-
-    const defaultTrueVariables = ALL_TRUE_VARIABLE_KEYS.map(item => ({
-        ...item,
-        value: true
-    }));
-
-    res.json({
-        success: true,
-        allTrueByDefault: true,
-        defaultTrueVariables,
-        supabaseAutoConfigured: {
-            configured: true,
-            url: simDatabase.SUPABASE_CONFIG.url,
-            jwksUrl: simDatabase.SUPABASE_CONFIG.jwksUrl,
-            tinyCaption: simDatabase.TINY_CAPTION
-        },
-        optionalVariables: {
-            SESSION_ID: userCfg ? userCfg.sessionId : (fileConfig.SESSION_ID || process.env.SESSION_ID || ''),
-            RAILWAY_BACKEND_URL: userCfg ? userCfg.railwayBackendUrl : (fileConfig.RAILWAY_BACKEND_URL || process.env.RAILWAY_BACKEND_URL || ''),
-            OWNER_NUMBER: userCfg ? userCfg.ownerNumber : (fileConfig.OWNER_NUMBER || process.env.OWNER_NUMBER || '254141693915'),
-            BOT_NAME: userCfg ? userCfg.botName : (fileConfig.BOT_NAME || process.env.BOT_NAME || 'Zaid Ashiq X Ultra V. Coder'),
-            PREFIX: userCfg ? userCfg.prefix : (fileConfig.PREFIX || process.env.PREFIX || '.'),
-            GIPHY_API_KEY: userSettings.GIPHY_API_KEY ?? (fileConfig.GIPHY_API_KEY || process.env.GIPHY_API_KEY || ''),
-            DATABASE_URL: userSettings.DATABASE_URL ?? (fileConfig.DATABASE_URL || process.env.DATABASE_URL || ''),
-            MONGO_URI: userSettings.MONGO_URI ?? (fileConfig.MONGO_URI || process.env.MONGO_URI || ''),
-            REDIS_URL: userSettings.REDIS_URL ?? (fileConfig.REDIS_URL || process.env.REDIS_URL || '')
-        }
-    });
+        res.json({
+            success: true,
+            allVariables: state.variables,
+            booleanVariables: state.booleanVariables,
+            stringVariables: state.stringVariables,
+            valuesMap: state.valuesMap,
+            defaultTrueVariables: state.booleanVariables.map(v => ({
+                key: v.key,
+                label: v.label,
+                category: v.category,
+                value: v.value,
+                stringValue: v.stringValue,
+                description: v.description
+            })),
+            supabaseAutoConfigured: {
+                configured: true,
+                url: simDatabase.SUPABASE_CONFIG.url,
+                jwksUrl: simDatabase.SUPABASE_CONFIG.jwksUrl,
+                tinyCaption: simDatabase.TINY_CAPTION
+            },
+            optionalVariables: state.valuesMap
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to load variables: ' + err.message });
+    }
 });
 
-app.post('/api/config/optional', async (req, res) => {
-    const body = req.body || {};
-    let current = {};
+app.post(['/api/config/optional', '/api/variables'], async (req, res) => {
     try {
-        if (fs.existsSync(CONFIG_PATH)) {
-            current = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-        }
-    } catch (_) {}
+        const body = req.body || {};
+        const updates = body.variables && typeof body.variables === 'object' ? body.variables : body;
+        const activeSock = sessionManager?.getActiveSocket ? sessionManager.getActiveSocket() : null;
+        const sessionNumber = activeSock?._sessionNumber || null;
 
-    // Enforce default boolean variables = true unless explicitly overridden
-    for (const item of ALL_TRUE_VARIABLE_KEYS) {
-        current[item.key] = 'true';
-        process.env[item.key] = 'true';
-    }
-
-    // Save optional variables if provided (Supabase is auto-configured and never asked manually)
-    const optionalKeys = [
-        'SESSION_ID',
-        'RAILWAY_BACKEND_URL',
-        'OWNER_NUMBER',
-        'BOT_NAME',
-        'PREFIX',
-        'GIPHY_API_KEY',
-        'DATABASE_URL',
-        'MONGO_URI',
-        'REDIS_URL'
-    ];
-
-    for (const key of optionalKeys) {
-        if (body[key] !== undefined) {
-            const val = String(body[key] ?? '').trim();
-            current[key] = val;
-            process.env[key] = val;
-        }
-    }
-
-    // Persist per-user isolated configuration if authenticated
-    let updatedUserCfg = null;
-    if (req.user && req.user.id) {
-        updatedUserCfg = database.saveUserConfig(req.user.id, {
-            botName: body.BOT_NAME,
-            ownerNumber: body.OWNER_NUMBER,
-            prefix: body.PREFIX,
-            sessionId: body.SESSION_ID,
-            railwayBackendUrl: body.RAILWAY_BACKEND_URL,
-            settings: {
-                GIPHY_API_KEY: body.GIPHY_API_KEY,
-                DATABASE_URL: body.DATABASE_URL,
-                MONGO_URI: body.MONGO_URI,
-                REDIS_URL: body.REDIS_URL
-            }
+        const updatedState = variableService.updateVariables(updates, {
+            userId: req.user?.id || null,
+            sessionNumber,
+            database,
+            sock: activeSock
         });
-    }
 
-    try {
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(current, null, 2), 'utf8');
         let sessionActivated = false;
-        if (body.SESSION_ID && String(body.SESSION_ID).trim() && sessionManager?.activateSession) {
+        const newSessionId = updates.SESSION_ID ? String(updates.SESSION_ID).trim() : '';
+        if (newSessionId && sessionManager?.activateSession) {
             try {
-                const act = await sessionManager.activateSession(String(body.SESSION_ID).trim(), body.OWNER_NUMBER);
+                const act = await sessionManager.activateSession(newSessionId, updates.OWNER_NUMBER || updatedState.valuesMap.OWNER_NUMBER);
                 if (req.user && act?.cleanNumber) {
                     database.linkUserSession(req.user.id, act.cleanNumber, act.sessionId);
                 }
                 sessionActivated = true;
             } catch (_) {}
         }
+
         res.json({
             success: true,
             sessionActivated,
-            message: 'All default variables verified as TRUE and saved to your personal dashboard!',
-            optionalVariables: {
-                SESSION_ID: updatedUserCfg ? updatedUserCfg.sessionId : (current.SESSION_ID || ''),
-                RAILWAY_BACKEND_URL: updatedUserCfg ? updatedUserCfg.railwayBackendUrl : (current.RAILWAY_BACKEND_URL || ''),
-                OWNER_NUMBER: updatedUserCfg ? updatedUserCfg.ownerNumber : (current.OWNER_NUMBER || '254141693915'),
-                BOT_NAME: updatedUserCfg ? updatedUserCfg.botName : (current.BOT_NAME || 'Zaid Ashiq X Ultra V. Coder'),
-                PREFIX: updatedUserCfg ? updatedUserCfg.prefix : (current.PREFIX || '.'),
-                GIPHY_API_KEY: updatedUserCfg?.settings?.GIPHY_API_KEY ?? (current.GIPHY_API_KEY || ''),
-                DATABASE_URL: updatedUserCfg?.settings?.DATABASE_URL ?? (current.DATABASE_URL || ''),
-                MONGO_URI: updatedUserCfg?.settings?.MONGO_URI ?? (current.MONGO_URI || ''),
-                REDIS_URL: updatedUserCfg?.settings?.REDIS_URL ?? (current.REDIS_URL || '')
-            }
+            message: 'Variables updated and synced across Dashboard, Railway Volume, and WhatsApp (.variable)!',
+            allVariables: updatedState.variables,
+            booleanVariables: updatedState.booleanVariables,
+            stringVariables: updatedState.stringVariables,
+            valuesMap: updatedState.valuesMap,
+            optionalVariables: updatedState.valuesMap
         });
     } catch (err) {
-        res.status(500).json({ error: 'Failed to save optional variables: ' + err.message });
+        res.status(500).json({ error: 'Failed to save variables: ' + err.message });
+    }
+});
+
+app.delete('/api/variables/:key', (req, res) => {
+    try {
+        const key = req.params.key;
+        variableService.deleteCustomVariable(key);
+        const state = variableService.getAllVariables({
+            userId: req.user?.id || null,
+            database
+        });
+        res.json({
+            success: true,
+            message: `Custom variable ${String(key).toUpperCase()} deleted.`,
+            allVariables: state.variables,
+            booleanVariables: state.booleanVariables,
+            stringVariables: state.stringVariables,
+            valuesMap: state.valuesMap
+        });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
     }
 });
 

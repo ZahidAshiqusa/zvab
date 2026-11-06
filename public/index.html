@@ -819,7 +819,7 @@
     </section>
 
     <!-- ======================================================================= -->
-    <!-- TAB 0B: 🧩 OPTIONAL VARIABLES & ALL-TRUE VERIFICATION APP               -->
+    <!-- TAB 0B: 🧩 UNIFIED VARIABLES MANAGER (DASHBOARD + .variable SYNC)       -->
     <!-- ======================================================================= -->
     <section id="tab-optional" class="tab-content hidden space-y-6">
       <div class="p-6 sm:p-8 rounded-3xl bg-slate-900/80 border border-amber-500/30 shadow-2xl space-y-6">
@@ -829,121 +829,133 @@
               🧩
             </div>
             <div>
-              <div class="flex items-center gap-2">
-                <h2 class="text-xl font-black text-white">Optional Variables &amp; All-True Defaults</h2>
-                <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono font-bold">16/16 TRUE</span>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="text-xl font-black text-white">Variables Manager &amp; <code class="text-amber-300 font-mono">.variable</code> Control</h2>
+                <span id="varsCountBadge" class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono font-bold">ALL VARIABLES SYNCED</span>
               </div>
               <p class="text-xs text-slate-400 mt-1">
-                Every boolean toggle for WhatsApp Status and Automation is automatically set to <code class="text-emerald-400 font-mono font-bold">true</code>. You only need to fill optional connection values below if desired.
+                Manage every bot variable, boolean toggle, and environment setting here or on WhatsApp using <code class="text-amber-300 font-mono font-bold">.variable</code> (e.g. <code class="text-emerald-300 font-mono">.variable ALWAYSONLINE on|off</code>).
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onclick="switchTab('gallery')"
-            class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer self-start sm:self-auto"
-          >
-            ⬅ Back to Apps Gallery
-          </button>
+          <div class="flex items-center gap-2 self-start sm:self-auto">
+            <button
+              type="button"
+              onclick="fetchOptionalVariablesConfig()"
+              class="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold transition cursor-pointer"
+            >
+              🔄 Refresh
+            </button>
+            <button
+              type="button"
+              onclick="switchTab('gallery')"
+              class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer"
+            >
+              ⬅ Back to Apps Gallery
+            </button>
+          </div>
+        </div>
+
+        <!-- WhatsApp .variable Command Quick Reference Banner -->
+        <div class="p-4 rounded-2xl bg-slate-950/90 border border-amber-500/30 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div class="space-y-1">
+            <div class="text-xs font-black text-amber-300 uppercase tracking-wider">💬 Manage Directly From WhatsApp (.variable Command)</div>
+            <div class="text-xs text-slate-300 font-mono flex flex-wrap gap-x-4 gap-y-1">
+              <span>• <strong class="text-white">.variable</strong> (List all &amp; buttons)</span>
+              <span>• <strong class="text-white">.variable ALWAYSONLINE on</strong></span>
+              <span>• <strong class="text-white">.variable ALWAYSONLINE off</strong></span>
+              <span>• <strong class="text-white">.variable PREFIX !</strong></span>
+              <span>• <strong class="text-white">.variable BOT_NAME Zaid Ashiq X Ultra V. Coder</strong></span>
+            </div>
+          </div>
+          <span class="px-3 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono text-[11px] font-bold shrink-0">
+            🔒 Owner-Locked
+          </span>
         </div>
 
         <div id="optionalVarsToastBox" class="hidden p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-xs text-emerald-200 font-medium"></div>
 
+        <!-- Quick Add / Set Any Variable Bar -->
+        <form onsubmit="addOrUpdateCustomVariableUI(event)" class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
+          <div class="sm:w-64">
+            <label class="block text-[10px] font-mono text-amber-300 uppercase font-bold mb-1">Variable Key (e.g. ALWAYSONLINE or CUSTOM_KEY)</label>
+            <input
+              type="text"
+              id="quickSetVarKey"
+              required
+              placeholder="VARIABLE_NAME"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono text-white uppercase outline-none focus:border-amber-400"
+            />
+          </div>
+          <div class="flex-1">
+            <label class="block text-[10px] font-mono text-slate-400 uppercase font-bold mb-1">Variable Value (true / false / text / URL / key)</label>
+            <input
+              type="text"
+              id="quickSetVarValue"
+              placeholder="Enter value (e.g. false, true, ., Zaid Ashiq X Ultra V. Coder)..."
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono text-white outline-none focus:border-amber-400"
+            />
+          </div>
+          <button
+            type="submit"
+            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 transition cursor-pointer shrink-0"
+          >
+            ⚡ Set / Add Variable
+          </button>
+        </form>
+
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <!-- Left: Optional Inputs Form (7 cols) -->
-          <form onsubmit="saveOptionalVariablesForm(event)" class="lg:col-span-7 space-y-4 bg-slate-950/70 border border-slate-800 rounded-2xl p-5">
+          <!-- Left: All Boolean Toggles with Live ON/OFF Switches (5 cols) -->
+          <div class="lg:col-span-5 bg-slate-950/70 border border-emerald-500/30 rounded-2xl p-5 space-y-4">
             <div class="flex items-center justify-between">
-              <h3 class="text-sm font-bold text-amber-400 uppercase tracking-wider">1. Optional Connection Variables</h3>
-              <span class="text-[11px] font-mono text-slate-400">Leave blank if not needed</span>
+              <h3 class="text-sm font-bold text-emerald-400 uppercase tracking-wider">1. Boolean Toggles (ON / OFF)</h3>
+              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold">1-CLICK TOGGLE</span>
             </div>
-
-            <div class="space-y-3">
-              <div>
-                <label class="block text-xs font-bold text-white mb-1">
-                  SESSION_ID <span class="text-[10px] font-mono text-slate-400 font-normal">(Optional — leave empty if pairing via 8-digit code)</span>
-                </label>
-                <input
-                  type="text"
-                  id="optVarSessionId"
-                  placeholder="Urooj~eyJub2lzZUtleSI6... (Optional)"
-                  class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-white outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div>
-                <label class="block text-xs font-bold text-white mb-1">
-                  RAILWAY_BACKEND_URL <span class="text-[10px] font-mono text-slate-400 font-normal">(Optional — connect frontend to external Railway server)</span>
-                </label>
-                <input
-                  type="text"
-                  id="optVarRailwayUrl"
-                  placeholder="https://your-bot-production.up.railway.app (Optional)"
-                  class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-white outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label class="block text-xs font-bold text-white mb-1">OWNER_NUMBER</label>
-                  <input
-                    type="text"
-                    id="optVarOwnerNumber"
-                    value="254141693915"
-                    placeholder="254141693915"
-                    class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-white outline-none focus:border-amber-500"
-                  />
-                </div>
-                <div>
-                  <label class="block text-xs font-bold text-white mb-1">BOT_NAME</label>
-                  <input
-                    type="text"
-                    id="optVarBotName"
-                    value="Zaid Ashiq X Ultra V. Coder"
-                    placeholder="Zaid Ashiq X Ultra V. Coder"
-                    class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-amber-500"
-                  />
-                </div>
-                <div>
-                  <label class="block text-xs font-bold text-white mb-1">PREFIX</label>
-                  <input
-                    type="text"
-                    id="optVarPrefix"
-                    value="."
-                    placeholder="."
-                    class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-white outline-none focus:border-amber-500"
-                  />
-                </div>
-              </div>
-
-              <div class="pt-2 border-t border-slate-800/80 space-y-3">
-                <div class="text-xs font-bold text-slate-300">Optional External Integrations (Leave blank for built-in SQLite)</div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label class="block text-[10px] font-mono text-slate-400 uppercase mb-1">GIPHY_API_KEY (Optional)</label>
-                    <input type="text" id="optVarGiphyKey" placeholder="Optional Giphy key..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-white" />
-                  </div>
-                  <div>
-                    <label class="block text-[10px] font-mono text-slate-400 uppercase mb-1">DATABASE_URL (Optional Postgres)</label>
-                    <input type="text" id="optVarDatabaseUrl" placeholder="postgresql://... (Optional)" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-white" />
-                  </div>
-                  <div>
-                    <label class="block text-[10px] font-mono text-slate-400 uppercase mb-1">MONGO_URI (Optional Mongo)</label>
-                    <input type="text" id="optVarMongoUri" placeholder="mongodb+srv://... (Optional)" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-white" />
-                  </div>
-                  <div>
-                    <label class="block text-[10px] font-mono text-slate-400 uppercase mb-1">REDIS_URL (Optional Redis)</label>
-                    <input type="text" id="optVarRedisUrl" placeholder="redis://... (Optional)" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-white" />
-                  </div>
-                </div>
-              </div>
+            <p class="text-xs text-slate-400">
+              Click <strong>ON</strong> or <strong>OFF</strong> on any toggle below to switch it live across the bot and <code class="text-slate-300">data/config.json</code> (<code class="text-amber-300 font-mono">ALWAYSONLINE</code> and <code class="text-amber-300 font-mono">CHATBOT_ENABLED</code> are OFF by default):
+            </p>
+            <div id="allTrueVariablesList" class="space-y-2.5 max-h-[640px] overflow-y-auto custom-scrollbar pr-1">
+              <!-- Populated dynamically with interactive ON/OFF buttons -->
             </div>
+          </div>
 
-            <div class="pt-3 flex items-center gap-3 flex-wrap">
+          <!-- Right: All Configuration, Identity, Cloud & Custom Variables (7 cols) -->
+          <form onsubmit="saveOptionalVariablesForm(event)" class="lg:col-span-7 space-y-4 bg-slate-950/70 border border-slate-800 rounded-2xl p-5">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h3 class="text-sm font-bold text-amber-400 uppercase tracking-wider">2. All System, Cloud &amp; API Variables</h3>
+                <p class="text-[11px] text-slate-400">Edit any variable value below and click Save All Variables</p>
+              </div>
               <button
                 type="submit"
-                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 transition cursor-pointer"
+                class="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 transition cursor-pointer"
               >
-                💾 Save Optional Variables &amp; Sync All TRUE
+                💾 Save All Variables
+              </button>
+            </div>
+
+            <!-- Dynamic String Variables Container -->
+            <div id="allStringVariablesContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[580px] overflow-y-auto custom-scrollbar pr-1">
+              <!-- Populated dynamically from /api/variables -->
+            </div>
+
+            <!-- Legacy hidden/compatible IDs kept in sync -->
+            <input type="hidden" id="optVarSessionId" />
+            <input type="hidden" id="optVarRailwayUrl" />
+            <input type="hidden" id="optVarOwnerNumber" />
+            <input type="hidden" id="optVarBotName" />
+            <input type="hidden" id="optVarPrefix" />
+            <input type="hidden" id="optVarGiphyKey" />
+            <input type="hidden" id="optVarDatabaseUrl" />
+            <input type="hidden" id="optVarMongoUri" />
+            <input type="hidden" id="optVarRedisUrl" />
+
+            <div class="pt-3 border-t border-slate-800 flex items-center justify-between gap-3 flex-wrap">
+              <button
+                type="submit"
+                class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 transition cursor-pointer"
+              >
+                💾 Save All Variables &amp; Sync
               </button>
               <button
                 type="button"
@@ -954,20 +966,6 @@
               </button>
             </div>
           </form>
-
-          <!-- Right: All 16 Pre-Configured TRUE Variables List (5 cols) -->
-          <div class="lg:col-span-5 bg-slate-950/70 border border-emerald-500/30 rounded-2xl p-5 space-y-4">
-            <div class="flex items-center justify-between">
-              <h3 class="text-sm font-bold text-emerald-400 uppercase tracking-wider">2. Pre-Set TRUE Variables (16/16)</h3>
-              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold">AUTO-ENABLED</span>
-            </div>
-            <p class="text-xs text-slate-400">
-              All boolean variables below are locked to <code class="text-emerald-400 font-mono font-bold">true</code> in <code class="text-slate-300">env.z.env</code> and <code class="text-slate-300">data/config.json</code>, and your <strong>SIM &amp; CNIC Live API</strong> (<code class="text-cyan-400 font-mono">sim-db-api.faizankhichi.me</code>) is pre-configured automatically:
-            </p>
-            <div id="allTrueVariablesList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-96 overflow-y-auto custom-scrollbar pr-1">
-              <!-- Populated by JS -->
-            </div>
-          </div>
         </div>
       </div>
     </section>
@@ -5020,10 +5018,10 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
         desc: 'Tap any 3D glossy app icon below to launch its workspace • All boolean variables set to TRUE'
       },
       optional: {
-        title: 'Optional Variables & All-True Config',
+        title: 'Variables Manager (.variable)',
         icon: '🧩',
-        badge: '16/16 TRUE',
-        desc: 'All 16 boolean toggles are auto-set to TRUE • Only fill optional SESSION_ID or Railway URL'
+        badge: 'All Variables',
+        desc: 'Manage all boolean toggles, bot identity, cloud & custom variables here or via WhatsApp .variable command'
       },
       simdb: {
         title: 'SIM & CNIC Database (Supabase)',
@@ -7447,6 +7445,18 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
         action: () => switchTab('autoreact')
       },
       {
+        id: 'optional',
+        name: 'Variables',
+        sub: 'All Vars & .variable',
+        icon: '🧩',
+        image: '',
+        badge: '.variable',
+        badgeColor: 'bg-amber-300 text-slate-950',
+        gradient: 'from-amber-400 via-orange-500 to-red-600',
+        category: 'cloud',
+        action: () => switchTab('optional')
+      },
+      {
         id: 'simdb',
         name: 'SIM Database',
         sub: '03/+92 & CNIC',
@@ -7706,82 +7716,253 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
       if (modal) modal.classList.add('hidden');
     }
 
+    let cachedStringVariables = [];
+
+    function showVariablesToast(msg, isError = false) {
+      const box = document.getElementById('optionalVarsToastBox');
+      if (!box) return;
+      box.textContent = (isError ? '❌ ' : '✅ ') + msg;
+      box.className = isError
+        ? 'p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-xs text-rose-200 font-medium'
+        : 'p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-xs text-emerald-200 font-medium';
+      box.classList.remove('hidden');
+      setTimeout(() => box.classList.add('hidden'), 5000);
+    }
+
+    function renderVariablesDashboard(data) {
+      const opt = data.optionalVariables || data.valuesMap || {};
+      const setVal = (id, v) => {
+        const el = document.getElementById(id);
+        if (el && document.activeElement !== el && v !== undefined) el.value = v;
+      };
+
+      setVal('optVarSessionId', opt.SESSION_ID || '');
+      setVal('optVarRailwayUrl', opt.RAILWAY_BACKEND_URL || '');
+      setVal('optVarOwnerNumber', opt.OWNER_NUMBER || '254141693915');
+      setVal('optVarBotName', opt.BOT_NAME || 'Zaid Ashiq X Ultra V. Coder');
+      setVal('optVarPrefix', opt.PREFIX || '.');
+      setVal('optVarGiphyKey', opt.GIPHY_API_KEY || '');
+      setVal('optVarDatabaseUrl', opt.DATABASE_URL || '');
+      setVal('optVarMongoUri', opt.MONGO_URI || '');
+      setVal('optVarRedisUrl', opt.REDIS_URL || '');
+
+      setVal('modalOptSessionId', opt.SESSION_ID || '');
+      setVal('modalOptRailwayUrl', opt.RAILWAY_BACKEND_URL || '');
+      setVal('modalOptOwnerNumber', opt.OWNER_NUMBER || '254141693915');
+      setVal('modalOptBotName', opt.BOT_NAME || 'Zaid Ashiq X Ultra V. Coder');
+      setVal('modalOptPrefix', opt.PREFIX || '.');
+
+      const boolVars = data.booleanVariables || data.defaultTrueVariables || [];
+      const strVars = data.stringVariables || [];
+      cachedStringVariables = strVars;
+
+      const countBadge = document.getElementById('varsCountBadge');
+      if (countBadge) {
+        const onCount = boolVars.filter(v => v.value === true || v.stringValue === 'true').length;
+        countBadge.textContent = `${boolVars.length + strVars.length} VARS • ${onCount}/${boolVars.length} ON`;
+      }
+
+      const listEl = document.getElementById('allTrueVariablesList');
+      if (listEl && Array.isArray(boolVars)) {
+        listEl.innerHTML = boolVars.map(v => {
+          const isOn = v.value === true || v.stringValue === 'true';
+          return `
+            <div class="p-3 rounded-xl bg-slate-900/90 border ${isOn ? 'border-emerald-500/35' : 'border-slate-800'} flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-mono font-bold text-white truncate">${escapeHtml(v.key)}</span>
+                  <span class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold ${isOn ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">
+                    ${isOn ? 'ON' : 'OFF'}
+                  </span>
+                </div>
+                <div class="text-[10px] text-slate-400 truncate mt-0.5">${escapeHtml(v.label || v.description || '')}</div>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onclick="toggleBooleanVariableUI('${escapeHtml(v.key)}', 'true')"
+                  class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-black transition cursor-pointer ${
+                    isOn
+                      ? 'bg-emerald-500 text-slate-950 shadow shadow-emerald-500/30'
+                      : 'bg-slate-800 text-slate-400 hover:text-white'
+                  }"
+                >
+                  ON
+                </button>
+                <button
+                  type="button"
+                  onclick="toggleBooleanVariableUI('${escapeHtml(v.key)}', 'false')"
+                  class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-black transition cursor-pointer ${
+                    !isOn
+                      ? 'bg-rose-500 text-white shadow shadow-rose-500/30'
+                      : 'bg-slate-800 text-slate-400 hover:text-white'
+                  }"
+                >
+                  OFF
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      const strContainer = document.getElementById('allStringVariablesContainer');
+      if (strContainer && Array.isArray(strVars)) {
+        strContainer.innerHTML = strVars.map(v => `
+          <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5 ${v.key === 'SESSION_ID' || v.key === 'RAILWAY_BACKEND_URL' || v.key === 'AUTO_STATUS_MSG' ? 'sm:col-span-2' : ''}">
+            <div class="flex items-center justify-between gap-2">
+              <label class="text-[11px] font-mono font-bold text-amber-300 truncate" for="varInput_${escapeHtml(v.key)}">
+                ${escapeHtml(v.key)}
+              </label>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[9px] font-mono text-slate-500">${escapeHtml(v.category || '')}</span>
+                ${v.isCustom ? `<button type="button" onclick="deleteCustomVariableUI('${escapeHtml(v.key)}')" class="text-[10px] text-rose-400 hover:text-rose-300 font-bold cursor-pointer" title="Delete custom variable">✕</button>` : ''}
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <input
+                type="text"
+                id="varInput_${escapeHtml(v.key)}"
+                data-var-key="${escapeHtml(v.key)}"
+                value="${escapeHtml(v.stringValue ?? '')}"
+                placeholder="${escapeHtml(v.label || v.key)}"
+                class="var-managed-input flex-1 px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-white outline-none focus:border-amber-500"
+              />
+              <button
+                type="button"
+                onclick="saveSingleVariableUI('${escapeHtml(v.key)}')"
+                class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-200 text-[10px] font-mono font-bold transition cursor-pointer shrink-0"
+                title="Save ${escapeHtml(v.key)}"
+              >
+                Save
+              </button>
+            </div>
+            <div class="text-[10px] text-slate-500 truncate">${escapeHtml(v.description || v.label || '')}</div>
+          </div>
+        `).join('');
+      }
+    }
+
     async function fetchOptionalVariablesConfig() {
       try {
-        const res = await fetch('/api/config/optional');
+        const res = await fetch('/api/variables');
         const data = await res.json();
         if (!data.success) return;
-
-        const opt = data.optionalVariables || {};
-        const setVal = (id, v) => {
-          const el = document.getElementById(id);
-          if (el && document.activeElement !== el && v !== undefined) el.value = v;
-        };
-
-        setVal('optVarSessionId', opt.SESSION_ID || '');
-        setVal('optVarRailwayUrl', opt.RAILWAY_BACKEND_URL || '');
-        setVal('optVarOwnerNumber', opt.OWNER_NUMBER || '254141693915');
-        setVal('optVarBotName', opt.BOT_NAME || 'Zaid Ashiq X Ultra V. Coder');
-        setVal('optVarPrefix', opt.PREFIX || '.');
-        setVal('optVarGiphyKey', opt.GIPHY_API_KEY || '');
-        setVal('optVarDatabaseUrl', opt.DATABASE_URL || '');
-        setVal('optVarMongoUri', opt.MONGO_URI || '');
-        setVal('optVarRedisUrl', opt.REDIS_URL || '');
-
-        setVal('modalOptSessionId', opt.SESSION_ID || '');
-        setVal('modalOptRailwayUrl', opt.RAILWAY_BACKEND_URL || '');
-        setVal('modalOptOwnerNumber', opt.OWNER_NUMBER || '254141693915');
-        setVal('modalOptBotName', opt.BOT_NAME || 'Zaid Ashiq X Ultra V. Coder');
-        setVal('modalOptPrefix', opt.PREFIX || '.');
-
-        const listEl = document.getElementById('allTrueVariablesList');
-        if (listEl && Array.isArray(data.defaultTrueVariables)) {
-          listEl.innerHTML = data.defaultTrueVariables.map(v => `
-            <div class="p-2.5 rounded-xl bg-slate-900/90 border border-emerald-500/30 flex items-center justify-between gap-2">
-              <div class="min-w-0">
-                <div class="text-[11px] font-mono font-bold text-white truncate">${v.key}</div>
-                <div class="text-[10px] text-slate-400 truncate">${v.label}</div>
-              </div>
-              <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-black shrink-0">
-                true ✓
-              </span>
-            </div>
-          `).join('');
-        }
+        renderVariablesDashboard(data);
       } catch (err) {
         console.warn('[optionalVars] load error:', err.message);
       }
     }
 
-    async function saveOptionalVariablesForm(e) {
+    async function toggleBooleanVariableUI(key, boolStr) {
+      try {
+        const res = await fetch('/api/variables', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [key]: boolStr })
+        });
+        const data = await res.json();
+        if (data.success) {
+          renderVariablesDashboard(data);
+          showVariablesToast(`${key} set to ${boolStr === 'true' ? 'ON (true)' : 'OFF (false)'}`);
+          fetchStatus();
+        } else {
+          showVariablesToast(data.error || 'Failed to update variable', true);
+        }
+      } catch (err) {
+        showVariablesToast(err.message, true);
+      }
+    }
+
+    async function saveSingleVariableUI(key) {
+      const inputEl = document.getElementById('varInput_' + key);
+      if (!inputEl) return;
+      const val = inputEl.value.trim();
+      try {
+        const res = await fetch('/api/variables', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [key]: val })
+        });
+        const data = await res.json();
+        if (data.success) {
+          renderVariablesDashboard(data);
+          showVariablesToast(`Saved ${key} = "${val}"`);
+          fetchStatus();
+        } else {
+          showVariablesToast(data.error || 'Failed to save variable', true);
+        }
+      } catch (err) {
+        showVariablesToast(err.message, true);
+      }
+    }
+
+    async function addOrUpdateCustomVariableUI(e) {
       if (e && e.preventDefault) e.preventDefault();
-      const payload = {
-        SESSION_ID: document.getElementById('optVarSessionId')?.value?.trim() || '',
-        RAILWAY_BACKEND_URL: document.getElementById('optVarRailwayUrl')?.value?.trim() || '',
-        OWNER_NUMBER: document.getElementById('optVarOwnerNumber')?.value?.trim() || '254141693915',
-        BOT_NAME: document.getElementById('optVarBotName')?.value?.trim() || 'Zaid Ashiq X Ultra V. Coder',
-        PREFIX: document.getElementById('optVarPrefix')?.value?.trim() || '.',
-        GIPHY_API_KEY: document.getElementById('optVarGiphyKey')?.value?.trim() || '',
-        DATABASE_URL: document.getElementById('optVarDatabaseUrl')?.value?.trim() || '',
-        MONGO_URI: document.getElementById('optVarMongoUri')?.value?.trim() || '',
-        REDIS_URL: document.getElementById('optVarRedisUrl')?.value?.trim() || ''
-      };
+      const keyEl = document.getElementById('quickSetVarKey');
+      const valEl = document.getElementById('quickSetVarValue');
+      const rawKey = (keyEl?.value || '').trim().toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+      const rawVal = (valEl?.value || '').trim();
+      if (!rawKey) return;
 
       try {
-        const res = await fetch('/api/config/optional', {
+        const res = await fetch('/api/variables', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [rawKey]: rawVal })
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (keyEl) keyEl.value = '';
+          if (valEl) valEl.value = '';
+          renderVariablesDashboard(data);
+          showVariablesToast(`Set variable ${rawKey} = "${rawVal}"`);
+          fetchStatus();
+        } else {
+          showVariablesToast(data.error || 'Failed to set variable', true);
+        }
+      } catch (err) {
+        showVariablesToast(err.message, true);
+      }
+    }
+
+    async function deleteCustomVariableUI(key) {
+      try {
+        const res = await fetch('/api/variables/' + encodeURIComponent(key), { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          renderVariablesDashboard(data);
+          showVariablesToast(data.message || `Deleted ${key}`);
+        } else {
+          showVariablesToast(data.error || 'Cannot delete variable', true);
+        }
+      } catch (err) {
+        showVariablesToast(err.message, true);
+      }
+    }
+
+    async function saveOptionalVariablesForm(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const payload = {};
+      document.querySelectorAll('.var-managed-input').forEach(inp => {
+        const k = inp.getAttribute('data-var-key');
+        if (k) payload[k] = inp.value.trim();
+      });
+
+      try {
+        const res = await fetch('/api/variables', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
         const data = await res.json();
-        const box = document.getElementById('optionalVarsToastBox');
-        if (box) {
-          box.textContent = '✅ ' + (data.message || 'Optional variables saved and all 16 defaults verified as TRUE!');
-          box.classList.remove('hidden');
-          setTimeout(() => box.classList.add('hidden'), 5000);
+        if (data.success) {
+          renderVariablesDashboard(data);
+          showVariablesToast(data.message || 'All variables saved and synced!');
+          fetchStatus();
+        } else {
+          showVariablesToast(data.error || 'Failed to save variables', true);
         }
-        fetchOptionalVariablesConfig();
-        fetchStatus();
       } catch (err) {
         console.error('[optionalVars] save error:', err.message);
       }
