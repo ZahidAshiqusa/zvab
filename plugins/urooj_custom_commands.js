@@ -1,26 +1,30 @@
 'use strict';
 
 /**
- * Urooj Choudhary Custom WhatsApp Commands
- * Owner: Urooj Choudhary (+254141693915)
+ * Zaid Ashiq X Ultra V. Coder Custom WhatsApp Commands
+ * Owner: Zaid Ashiq X Ultra V. Coder (+254141693915)
  *
  * Implements:
- * 1. .button/msg/buttonlimit/button1/button2 (+targetNumber)
+ * 1. .button/msg/buttonlimit/button1/button2 (+targetNumber) — Pure msg + buttons, NO caption/footer
  * 2. .ptv +923number (send replied video as circular video note)
  * 3. .voice +923number (send replied audio/video as voice note PTT)
  * 4. .😍 (unlock View-Once media and send exclusively to Owner DM +254141693915)
- * 5. .qouted msg1/replied +number (send fake-quoted reply to target number)
+ * 5. .qouted msg1/replied +number (send fake-quoted reply to target number — NO caption/footer)
  * 6. .online +9232number (subscribe & trace real-time online presence history)
+ * 7. .status (3-button privacy selector: Everyone in contact, Only share with, Exclude people)
+ * 8. .autoreact (3-service interactive selector -> 2-button ON/OFF toggle)
+ * 9. Owner-only lock: Sending msg commands work ONLY for the owner of the linked WhatsApp number
  */
 
 const fs = require('fs');
 const path = require('path');
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const { bot } = require('../lib/pluginLoader');
-const settings = require('../settings');
 const database = require('../lib/database');
 const { VAULT_DIR } = require('../lib/storagePaths');
 const simDatabase = require('../lib/simDatabase');
+const autoReactService = require('../lib/autoReactService');
+const { isLinkedSessionOwner } = require('../lib/statusService');
 
 let sendButtons = null;
 try {
@@ -31,7 +35,7 @@ try {
 
 const OWNER_CLEAN_NUMBER = '254141693915';
 const OWNER_JID = `${OWNER_CLEAN_NUMBER}@s.whatsapp.net`;
-const OWNER_NAME = 'Urooj Choudhary';
+const OWNER_NAME = 'Zaid Ashiq X Ultra V. Coder';
 
 // Deduplication set so pre-processor and plugin loader never double-fire on the same message ID
 const processedCommandIds = new Set();
@@ -61,7 +65,7 @@ function parsePhoneNumber(raw) {
     };
 }
 
-// Helper: Extract raw text from a Baileys message object
+// Helper: Extract raw text (including interactive button responses) from a Baileys message object
 function extractRawText(message) {
     if (!message || !message.message) return '';
     let m = message.message;
@@ -70,11 +74,25 @@ function extractRawText(message) {
     if (m.viewOnceMessageV2?.message) m = m.viewOnceMessageV2.message;
     if (m.documentWithCaptionMessage?.message) m = m.documentWithCaptionMessage.message;
 
+    let interactiveText =
+        m.buttonsResponseMessage?.selectedDisplayText ||
+        m.templateButtonReplyMessage?.selectedDisplayText ||
+        m.listResponseMessage?.title ||
+        '';
+
+    if (m.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson) {
+        try {
+            const params = JSON.parse(m.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson);
+            interactiveText = params.display_text || params.id || interactiveText;
+        } catch (_) {}
+    }
+
     return (
         m.conversation ||
         m.extendedTextMessage?.text ||
         m.imageMessage?.caption ||
         m.videoMessage?.caption ||
+        interactiveText ||
         ''
     ).trim();
 }
@@ -114,9 +132,11 @@ async function downloadBuffer(mediaNode, type) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. .button/msg/buttonlimit/button1/button2 (+number)
+//    Strictly sends ONLY message + buttons (NO caption / NO footer)
 // ─────────────────────────────────────────────────────────────────────────────
 async function executeButtonCommand(sock, chatId, message, rawInput) {
-    // Strip leading .button
+    if (!isLinkedSessionOwner(sock, message)) return;
+
     let body = String(rawInput || '').replace(/^[.!#/]?\s*button\b/i, '').trim();
     if (body.startsWith('/')) body = body.slice(1).trim();
 
@@ -127,19 +147,14 @@ async function executeButtonCommand(sock, chatId, message, rawInput) {
                 `*Usage 1:*\n` +
                 `\`.button/Your Message/2/Button 1/Button 2 +923001234567\`\n\n` +
                 `*Usage 2:*\n` +
-                `\`.button/+923001234567/Your Message/2/Button 1/Button 2\`\n\n` +
-                `👑 _${OWNER_NAME}_`
+                `\`.button/+923001234567/Your Message/2/Button 1/Button 2\``
         }, { quoted: message });
         return;
     }
 
-    // Check if there is a trailing or leading phone number separated by space (e.g. ".button/msg/2/btn1/btn2 +923001234567")
     let targetPhone = null;
-
-    // Split by '/' first
     const slashParts = body.split('/').map(s => s.trim()).filter(Boolean);
 
-    // Check if the first slash segment is a phone number: .button/+923001234567/msg/2/btn1/btn2
     if (slashParts.length >= 3) {
         const firstCandidate = parsePhoneNumber(slashParts[0]);
         if (firstCandidate && /^[+\d\s-]+$/.test(slashParts[0])) {
@@ -148,15 +163,12 @@ async function executeButtonCommand(sock, chatId, message, rawInput) {
         }
     }
 
-    // Check if the last slash segment is a phone number or ends with " +923..."
     if (!targetPhone && slashParts.length >= 2) {
         const lastPart = slashParts[slashParts.length - 1];
-        // Check if lastPart itself is purely a phone number: .button/msg/2/btn1/btn2/+923001234567
         if (/^[+]?\d[\d\s-]{6,15}$/.test(lastPart)) {
             targetPhone = parsePhoneNumber(lastPart);
             if (targetPhone) slashParts.pop();
         } else {
-            // Check if lastPart has a trailing phone number after space: "btn2 +923001234567"
             const trailingMatch = lastPart.match(/^(.*?)\s+([+]?\d[\d\s-]{6,15})$/);
             if (trailingMatch) {
                 const parsed = parsePhoneNumber(trailingMatch[2]);
@@ -174,8 +186,7 @@ async function executeButtonCommand(sock, chatId, message, rawInput) {
                 `❌ *Target Phone Number Required!*\n\n` +
                 `Please include the target number with country code:\n` +
                 `• \`.button/Hello/2/Yes/No +923001234567\`\n` +
-                `• \`.button/+923001234567/Hello/2/Yes/No\`\n\n` +
-                `👑 _${OWNER_NAME}_`
+                `• \`.button/+923001234567/Hello/2/Yes/No\``
         }, { quoted: message });
         return;
     }
@@ -191,18 +202,17 @@ async function executeButtonCommand(sock, chatId, message, rawInput) {
 
     const finalLabels = rawButtonLabels.slice(0, buttonLimit);
     const formattedButtons = finalLabels.map((label, idx) => ({
-        id: `urooj_btn_${idx + 1}`,
+        id: `zaid_btn_${idx + 1}`,
         text: label
     }));
 
-    const footerText = `👑 ${OWNER_NAME}`;
     let sentInteractive = false;
 
+    // Strictly NO caption / NO footer in button message!
     if (sendButtons) {
         try {
             await sendButtons(sock, targetPhone.jid, {
                 text: msgText,
-                footer: footerText,
                 buttons: formattedButtons
             });
             sentInteractive = true;
@@ -212,13 +222,8 @@ async function executeButtonCommand(sock, chatId, message, rawInput) {
     }
 
     if (!sentInteractive) {
-        const buttonLines = formattedButtons.map((b, i) => `┣ 🔘 *[${i + 1}]* ${b.text}`).join('\n');
-        const fallbackText =
-            `${msgText}\n\n` +
-            `┏━━━━━━━━━━━━━━━━━━━┓\n` +
-            `${buttonLines}\n` +
-            `┗━━━━━━━━━━━━━━━━━━━┛\n` +
-            `_${footerText}_`;
+        const buttonLines = formattedButtons.map((b) => `[ ${b.text} ]`).join('\n');
+        const fallbackText = `${msgText}\n\n${buttonLines}`;
         await sock.sendMessage(targetPhone.jid, { text: fallbackText });
     }
 
@@ -227,15 +232,16 @@ async function executeButtonCommand(sock, chatId, message, rawInput) {
             `✅ *Button Message Sent!*\n\n` +
             `📱 *To:* +${targetPhone.clean}\n` +
             `📝 *Message:* ${msgText}\n` +
-            `🔢 *Button Limit:* ${buttonLimit} (${formattedButtons.map(b => b.text).join(', ')})\n\n` +
-            `👑 _${OWNER_NAME}_`
+            `🔘 *Buttons:* ${formattedButtons.map(b => b.text).join(', ')}`
     }, { quoted: message });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. .ptv +923number (Send video in circle / Video Note)
+// 2. .ptv +923number (Send video in circle / Video Note) — Owner Only
 // ─────────────────────────────────────────────────────────────────────────────
 async function executePtvCommand(sock, chatId, message, rawInput) {
+    if (!isLinkedSessionOwner(sock, message)) return;
+
     const argStr = String(rawInput || '').replace(/^[.!#/]?\s*ptv\b/i, '').replace(/^\//, '').trim();
     const targetPhone = parsePhoneNumber(argStr);
 
@@ -244,13 +250,11 @@ async function executePtvCommand(sock, chatId, message, rawInput) {
             text:
                 `🎥 *${OWNER_NAME} Circular Video (PTV)*\n\n` +
                 `*Usage:* Reply to any video with:\n` +
-                `\`.ptv +923001234567\`\n\n` +
-                `👑 _${OWNER_NAME}_`
+                `\`.ptv +923001234567\``
         }, { quoted: message });
         return;
     }
 
-    // Locate video node in current message or quoted message
     let m = message.message || {};
     if (m.ephemeralMessage?.message) m = m.ephemeralMessage.message;
     const { quotedMessage } = getQuotedContext(message);
@@ -267,7 +271,7 @@ async function executePtvCommand(sock, chatId, message, rawInput) {
 
     if (!videoNode) {
         await sock.sendMessage(chatId, {
-            text: `❌ *Please reply to a video message* with \`.ptv +${targetPhone.clean}\` to send it in a circle!\n\n👑 _${OWNER_NAME}_`
+            text: `❌ *Please reply to a video message* with \`.ptv +${targetPhone.clean}\` to send it in a circle!`
         }, { quoted: message });
         return;
     }
@@ -285,15 +289,16 @@ async function executePtvCommand(sock, chatId, message, rawInput) {
     await sock.sendMessage(chatId, {
         text:
             `✅ *Circular Video Note (PTV) Sent!*\n\n` +
-            `📱 *Recipient:* +${targetPhone.clean}\n` +
-            `👑 _${OWNER_NAME}_`
+            `📱 *Recipient:* +${targetPhone.clean}`
     }, { quoted: message });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. .voice +923number (Send audio/video as playable Voice Note PTT)
+// 3. .voice +923number (Send audio/video as playable Voice Note PTT) — Owner Only
 // ─────────────────────────────────────────────────────────────────────────────
 async function executeVoiceCommand(sock, chatId, message, rawInput) {
+    if (!isLinkedSessionOwner(sock, message)) return;
+
     const argStr = String(rawInput || '').replace(/^[.!#/]?\s*voice\b/i, '').replace(/^\//, '').trim();
     const targetPhone = parsePhoneNumber(argStr);
 
@@ -302,8 +307,7 @@ async function executeVoiceCommand(sock, chatId, message, rawInput) {
             text:
                 `🎙️ *${OWNER_NAME} Voice Note Sender*\n\n` +
                 `*Usage:* Reply to any audio, voice note, or video with:\n` +
-                `\`.voice +923001234567\`\n\n` +
-                `👑 _${OWNER_NAME}_`
+                `\`.voice +923001234567\``
         }, { quoted: message });
         return;
     }
@@ -333,7 +337,7 @@ async function executeVoiceCommand(sock, chatId, message, rawInput) {
 
     if (!mediaNode || !mediaType) {
         await sock.sendMessage(chatId, {
-            text: `❌ *Please reply to an audio or video message* with \`.voice +${targetPhone.clean}\`!\n\n👑 _${OWNER_NAME}_`
+            text: `❌ *Please reply to an audio or video message* with \`.voice +${targetPhone.clean}\`!`
         }, { quoted: message });
         return;
     }
@@ -351,20 +355,21 @@ async function executeVoiceCommand(sock, chatId, message, rawInput) {
     await sock.sendMessage(chatId, {
         text:
             `✅ *Voice Note (PTT) Sent!*\n\n` +
-            `📱 *Recipient:* +${targetPhone.clean}\n` +
-            `👑 _${OWNER_NAME}_`
+            `📱 *Recipient:* +${targetPhone.clean}`
     }, { quoted: message });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. .😍 (Unlock View-Once file and send exclusively to Owner DM +254141693915)
+// 4. .😍 (Unlock View-Once file and send exclusively to Owner DM) — Owner Only
 // ─────────────────────────────────────────────────────────────────────────────
 async function executeViewOnceEmojiCommand(sock, chatId, message) {
+    if (!isLinkedSessionOwner(sock, message)) return;
+
     const { quotedMessage, quotedParticipant, stanzaId } = getQuotedContext(message);
 
     if (!quotedMessage) {
         await sock.sendMessage(chatId, {
-            text: `❌ *Please reply to a View-Once photo, video, or voice note with \`.😍\`* to unlock it to Owner DM (+${OWNER_CLEAN_NUMBER}).\n\n👑 _${OWNER_NAME}_`
+            text: `❌ *Please reply to a View-Once photo, video, or voice note with \`.😍\`* to unlock it to Owner DM (+${OWNER_CLEAN_NUMBER}).`
         }, { quoted: message });
         return;
     }
@@ -403,7 +408,7 @@ async function executeViewOnceEmojiCommand(sock, chatId, message) {
 
     if (!mediaNode || !mediaType) {
         await sock.sendMessage(chatId, {
-            text: `❌ The replied message does not contain View-Once image, video, or audio media.\n\n👑 _${OWNER_NAME}_`
+            text: `❌ The replied message does not contain View-Once image, video, or audio media.`
         }, { quoted: message });
         return;
     }
@@ -411,7 +416,6 @@ async function executeViewOnceEmojiCommand(sock, chatId, message) {
     await sock.sendMessage(chatId, { react: { text: '😍', key: message.key } });
     const buffer = await downloadBuffer(mediaNode, mediaType);
 
-    // Save to persistent Vault as well
     const senderClean = String(quotedParticipant || chatId).replace(/@.*$/, '').replace(/:\d+$/, '');
     try {
         const fileName = `vo_emoji_${Date.now()}.${ext}`;
@@ -440,20 +444,23 @@ async function executeViewOnceEmojiCommand(sock, chatId, message) {
         `👤 *Sender:* +${senderClean}\n` +
         `💬 *Chat:* ${chatId.endsWith('@g.us') ? 'Group Chat' : 'Private Chat'}\n` +
         (originalCaption ? `📝 *Caption:* ${originalCaption}\n` : '') +
-        `\n👑 *${OWNER_NAME}* (+${OWNER_CLEAN_NUMBER})`;
+        `\n👑 *${OWNER_NAME}*`;
 
-    // Deliver strictly to Owner DM (+254141693915)
+    const targetOwnerJid = sock?.user?.id
+        ? `${String(sock.user.id).split('@')[0].split(':')[0].replace(/\D/g, '')}@s.whatsapp.net`
+        : OWNER_JID;
+
     if (mediaType === 'image') {
-        await sock.sendMessage(OWNER_JID, { image: buffer, caption });
+        await sock.sendMessage(targetOwnerJid, { image: buffer, caption });
     } else if (mediaType === 'video') {
-        await sock.sendMessage(OWNER_JID, { video: buffer, caption });
+        await sock.sendMessage(targetOwnerJid, { video: buffer, caption });
     } else if (mediaType === 'audio') {
-        await sock.sendMessage(OWNER_JID, {
+        await sock.sendMessage(targetOwnerJid, {
             audio: buffer,
             mimetype: mime,
             ptt: Boolean(mediaNode.ptt)
         });
-        await sock.sendMessage(OWNER_JID, { text: caption });
+        await sock.sendMessage(targetOwnerJid, { text: caption });
     }
 
     await sock.sendMessage(chatId, { react: { text: '✅', key: message.key } });
@@ -461,8 +468,11 @@ async function executeViewOnceEmojiCommand(sock, chatId, message) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 5. .qouted msg1/replied +number (Send fake-quoted reply to target number)
+//    Strictly sends ONLY replied text quoting msg1 (NO caption / NO footer)
 // ─────────────────────────────────────────────────────────────────────────────
 async function executeQuotedCommand(sock, chatId, message, rawInput) {
+    if (!isLinkedSessionOwner(sock, message)) return;
+
     let body = String(rawInput || '').replace(/^[.!#/]?\s*(?:qouted|quoted)\b/i, '').trim();
     if (body.startsWith('/')) body = body.slice(1).trim();
 
@@ -473,8 +483,7 @@ async function executeQuotedCommand(sock, chatId, message, rawInput) {
                 `*Usage 1:*\n` +
                 `\`.qouted msg1/replied +923001234567\`\n\n` +
                 `*Usage 2:*\n` +
-                `\`.qouted/+923001234567/msg1/replied\`\n\n` +
-                `👑 _${OWNER_NAME}_`
+                `\`.qouted/+923001234567/msg1/replied\``
         }, { quoted: message });
         return;
     }
@@ -482,19 +491,16 @@ async function executeQuotedCommand(sock, chatId, message, rawInput) {
     const parts = body.split('/').map(s => s.trim()).filter(Boolean);
     let targetPhone = null;
 
-    // Check if first segment is target number: .qouted/+923001234567/msg1/replied
     if (parts.length >= 3 && /^[+]?\d[\d\s-]{6,15}$/.test(parts[0])) {
         targetPhone = parsePhoneNumber(parts[0]);
         if (targetPhone) parts.shift();
     }
 
-    // Check if third segment is target number: .qouted/msg1/replied/+923001234567
     if (!targetPhone && parts.length >= 3 && /^[+]?\d[\d\s-]{6,15}$/.test(parts[parts.length - 1])) {
         targetPhone = parsePhoneNumber(parts[parts.length - 1]);
         if (targetPhone) parts.pop();
     }
 
-    // Check if last segment ends with a phone number after space: .qouted msg1/replied +923001234567
     if (!targetPhone && parts.length >= 2) {
         const last = parts[parts.length - 1];
         const match = last.match(/^(.*?)\s+([+]?\d[\d\s-]{6,15})$/);
@@ -513,8 +519,7 @@ async function executeQuotedCommand(sock, chatId, message, rawInput) {
                 `❌ *Target Phone Number & Message Pair Required!*\n\n` +
                 `Format:\n` +
                 `• \`.qouted Hello how are you/I am fine +923001234567\`\n` +
-                `• \`.qouted/+923001234567/Hello how are you/I am fine\`\n\n` +
-                `👑 _${OWNER_NAME}_`
+                `• \`.qouted/+923001234567/Hello how are you/I am fine\``
         }, { quoted: message });
         return;
     }
@@ -535,6 +540,7 @@ async function executeQuotedCommand(sock, chatId, message, rawInput) {
         }
     };
 
+    // Strictly NO caption or footer in quoted message!
     await sock.sendMessage(targetPhone.jid, { text: replied }, { quoted: fakeQuoted });
 
     await sock.sendMessage(chatId, {
@@ -542,15 +548,16 @@ async function executeQuotedCommand(sock, chatId, message, rawInput) {
             `✅ *Quoted Reply Sent!*\n\n` +
             `📱 *To:* +${targetPhone.clean}\n` +
             `💭 *Quoted (msg1):* "${msg1}"\n` +
-            `↩️ *Replied:* "${replied}"\n\n` +
-            `👑 _${OWNER_NAME}_`
+            `↩️ *Replied:* "${replied}"`
     }, { quoted: message });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 6. .online +9232number (Trace online presence & history)
+// 6. .online +9232number (Trace online presence & history) — Owner Only
 // ─────────────────────────────────────────────────────────────────────────────
 async function executeOnlineCommand(sock, chatId, message, rawInput) {
+    if (!isLinkedSessionOwner(sock, message)) return;
+
     const argStr = String(rawInput || '').replace(/^[.!#/]?\s*online\b/i, '').replace(/^\//, '').trim();
     const targetPhone = parsePhoneNumber(argStr);
 
@@ -559,16 +566,13 @@ async function executeOnlineCommand(sock, chatId, message, rawInput) {
             text:
                 `🟢 *${OWNER_NAME} Online History Tracker*\n\n` +
                 `*Usage:*\n` +
-                `\`.online +923201234567\`\n\n` +
-                `Subscribes to real-time WhatsApp presence updates and displays the number's online/offline timeline.\n\n` +
-                `👑 _${OWNER_NAME}_`
+                `\`.online +923201234567\``
         }, { quoted: message });
         return;
     }
 
     const sessionManager = require('../lib/sessionManager');
 
-    // Ensure presence listener is attached to this socket and subscribe to targetJid
     try {
         if (sock && typeof sock.presenceSubscribe === 'function') {
             await sock.presenceSubscribe(targetPhone.jid);
@@ -587,8 +591,6 @@ async function executeOnlineCommand(sock, chatId, message, rawInput) {
     } catch (_) {}
 
     await sessionManager.subscribeTargetPresence(targetPhone.clean);
-
-    // Wait briefly so any immediate presence packet from WhatsApp arrives
     await new Promise(r => setTimeout(r, 1200));
 
     const logs = sessionManager.getPresenceLogs(targetPhone.jid) || [];
@@ -626,23 +628,26 @@ async function executeOnlineCommand(sock, chatId, message, rawInput) {
         `📜 *Online History Log:*\n` +
         `${historyLines}\n\n` +
         `_Run \`.online +${targetPhone.clean}\` anytime to view updated online timestamps._\n` +
-        `👑 *${OWNER_NAME}* (+${OWNER_CLEAN_NUMBER})`;
+        `👑 *${OWNER_NAME}*`;
 
     await sock.sendMessage(chatId, { text: report }, { quoted: message });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 7. .status / .poststatus (Direct WhatsApp Status Uploader & Voice Note Story)
+// 7. .status / .poststatus (3-Button Privacy Selector & Voice Note Story) — Owner Only
 // ─────────────────────────────────────────────────────────────────────────────
 async function executeStatusUploadCommand(sock, chatId, message) {
+    if (!isLinkedSessionOwner(sock, message)) return;
     const statusService = require('../lib/statusService');
     await statusService.handleStatusCommand(sock, message);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 8. SIM & CNIC Database Lookup (Auto-detect 03/+92 or 1-5 CNIC, or .sim/.cnic)
+// 8. SIM & CNIC Database Lookup (Owner Only)
 // ─────────────────────────────────────────────────────────────────────────────
 async function executeSimDatabaseCommand(sock, chatId, message, rawInput) {
+    if (!isLinkedSessionOwner(sock, message)) return;
+
     const cleaned = String(rawInput || '').trim();
     const detected = simDatabase.detectSimOrCnicQuery(cleaned);
 
@@ -652,7 +657,7 @@ async function executeSimDatabaseCommand(sock, chatId, message, rawInput) {
                 `🪪 *SIM & CNIC Database Lookup*\n\n` +
                 `*Instant Auto-Lookup:*\n` +
                 `• Send any mobile number starting with *03* or *+92* (e.g. \`03001234567\` or \`+923001234567\`)\n` +
-                `• Send any 13-digit CNIC starting with *1, 2, 3, 4, or 5* (e.g. \`3520212345671\` or \`35202-1234567-1\`)\n\n` +
+                `• Send any 13-digit CNIC starting with *1, 2, 3, 4, or 5* (e.g. \`3520212345671\`)\n\n` +
                 `*Or use commands:*\n` +
                 `• \`.sim 03001234567\`\n` +
                 `• \`.cnic 3520212345671\`\n\n` +
@@ -674,41 +679,44 @@ async function executeSimDatabaseCommand(sock, chatId, message, rawInput) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 9. @Deploy / .appdeploy (WhatsApp AI Website & App Builder + AppDeploy.ai)
+// 9. @Deploy / .appdeploy (Owner Only)
 // ─────────────────────────────────────────────────────────────────────────────
 async function executeAppDeployCommand(sock, chatId, message, rawInput) {
+    if (!isLinkedSessionOwner(sock, message)) return;
     const appDeployService = require('../lib/appdeploy/appdeploy.service');
     const cleaned = String(rawInput || '').replace(/^[.!#/]?(?:appdeploy|deploy)\b/i, '@Deploy').trim();
     await appDeployService.handleWhatsAppDeployCommand(sock, chatId, message, cleaned, 'zaidashiq');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Direct Socket Pre-Processor (Handles slash-syntax, emoji, @Deploy & SIM/CNIC auto-triggers)
+// Direct Socket Pre-Processor
 // ─────────────────────────────────────────────────────────────────────────────
 async function handleCustomCommandMessage(sock, chatUpdate) {
     const messages = chatUpdate?.messages;
     if (!Array.isArray(messages) || messages.length === 0) return false;
+
+    // Process automatic reactions (Status, Clients Msg, Every Msg including Owner)
+    await autoReactService.processAutomaticMessageReactions(sock, chatUpdate).catch(() => {});
 
     for (const message of messages) {
         if (!message || !message.key || !message.message) continue;
         const chatId = message.key.remoteJid;
         if (!chatId || chatId === 'status@broadcast') continue;
 
+        // 1. Check interactive .autoreact command or its 3-button / 2-button clicks (Owner only)
+        if (isLinkedSessionOwner(sock, message)) {
+            const handledAutoReact = await autoReactService.handleAutoReactCommandOrButton(sock, chatId, message);
+            if (handledAutoReact) {
+                markProcessed(message.key.id);
+                return true;
+            }
+        }
+
         const rawText = extractRawText(message);
         if (!rawText) continue;
 
         const trimmed = rawText.trim();
 
-        // Check if it matches any of the custom commands, @Deploy, or SIM/CNIC auto-triggers:
-        // 1. .button/... or .button ...
-        // 2. .ptv ...
-        // 3. .voice ...
-        // 4. .😍 or 😍 (when replying to View-Once)
-        // 5. .qouted ... or .quoted ...
-        // 6. .online ...
-        // 7. .status ... or .poststatus ...
-        // 8. Auto-detect msg starting with 03 / +92 (SIM details) or 1,2,3,4,5 (13-digit CNIC details) or .sim / .cnic
-        // 9. Auto-detect msg starting with @Deploy (or .appdeploy)
         const isButtonCmd = /^[.!#/]button(?:\/|\s|$)/i.test(trimmed);
         const isPtvCmd = /^[.!#/]ptv(?:\/|\s|$)/i.test(trimmed);
         const isVoiceCmd = /^[.!#/]voice(?:\/|\s|$)/i.test(trimmed);
@@ -716,12 +724,30 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
         const isQuotedCmd = /^[.!#/](?:qouted|quoted)(?:\/|\s|$)/i.test(trimmed);
         const isOnlineCmd = /^[.!#/]online(?:\/|\s|$)/i.test(trimmed);
         const isStatusCmd = /^[.!#/](?:status|poststatus|pstatus|setstatus)(?:\/|\s|$)/i.test(trimmed);
+        const isAutoReactCmd = /^[.!#/](?:autoreact|areact)(?:\/|\s|$)/i.test(trimmed);
         const isAppDeployCmd = /^@deploy(?:\s|$)/i.test(trimmed) || /^[.!#/]appdeploy(?:\s|$)/i.test(trimmed);
         const isSimExplicitCmd = /^[.!#/](?:sim|cnic|simdb|pakdb)(?:\/|\s|$)/i.test(trimmed);
         const simAutoDetected = !isAppDeployCmd ? simDatabase.detectSimOrCnicQuery(trimmed) : null;
 
-        if (!isButtonCmd && !isPtvCmd && !isVoiceCmd && !isEmojiVvCmd && !isQuotedCmd && !isOnlineCmd && !isStatusCmd && !isAppDeployCmd && !isSimExplicitCmd && !simAutoDetected) {
+        if (
+            !isButtonCmd &&
+            !isPtvCmd &&
+            !isVoiceCmd &&
+            !isEmojiVvCmd &&
+            !isQuotedCmd &&
+            !isOnlineCmd &&
+            !isStatusCmd &&
+            !isAutoReactCmd &&
+            !isAppDeployCmd &&
+            !isSimExplicitCmd &&
+            !simAutoDetected
+        ) {
             continue;
+        }
+
+        // Strict Owner-Only Lock: Only the owner of the linked WhatsApp number can use these commands
+        if (!isLinkedSessionOwner(sock, message)) {
+            return true;
         }
 
         if (markProcessed(message.key.id)) {
@@ -729,7 +755,9 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
         }
 
         try {
-            if (isStatusCmd) {
+            if (isAutoReactCmd) {
+                await autoReactService.handleAutoReactCommandOrButton(sock, chatId, message);
+            } else if (isStatusCmd) {
                 await executeStatusUploadCommand(sock, chatId, message);
             } else if (isAppDeployCmd) {
                 await executeAppDeployCommand(sock, chatId, message, trimmed);
@@ -749,9 +777,9 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
                 await executeOnlineCommand(sock, chatId, message, trimmed);
             }
         } catch (err) {
-            console.error('[uroojCustomCommands] Execution error:', err.message);
+            console.error('[customCommands] Execution error:', err.message);
             await sock.sendMessage(chatId, {
-                text: `❌ Command error: ${err.message}\n${simDatabase.TINY_CAPTION}`
+                text: `❌ Command error: ${err.message}`
             }, { quoted: message });
         }
         return true;
@@ -764,11 +792,23 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
 // Register in Plugin Loader so commands appear in .menu / .help & Web Dashboard
 // ─────────────────────────────────────────────────────────────────────────────
 bot({
+    command: ['autoreact', 'areact'],
+    menuCommands: ['autoreact'],
+    description: 'Interactive 3-service Auto React selector (Status, Clients Msg, Every Msg including Owner) with ON/OFF buttons',
+    category: 'owner'
+}, async (sock, chatId, message) => {
+    if (!isLinkedSessionOwner(sock, message)) return;
+    if (markProcessed(message?.key?.id)) return;
+    await autoReactService.handleAutoReactCommandOrButton(sock, chatId, message);
+});
+
+bot({
     command: ['appdeploy', 'deploy'],
     menuCommands: ['@Deploy <app idea>', 'appdeploy'],
     description: 'Generate multi-file AI web apps & deploy via AppDeploy.ai MCP (@Deploy Create a modern ecommerce website)',
     category: 'ai'
 }, async (sock, chatId, message, args) => {
+    if (!isLinkedSessionOwner(sock, message)) return;
     if (markProcessed(message?.key?.id)) return;
     const raw = extractRawText(message) || `@Deploy ${args.join(' ')}`;
     await executeAppDeployCommand(sock, chatId, message, raw);
@@ -780,6 +820,7 @@ bot({
     description: 'Fetch person SIM details (03/+92) or 13-digit CNIC details (starting 1-5) with Copy Button',
     category: 'search'
 }, async (sock, chatId, message, args) => {
+    if (!isLinkedSessionOwner(sock, message)) return;
     if (markProcessed(message?.key?.id)) return;
     const raw = extractRawText(message) || `.sim ${args.join(' ')}`;
     await executeSimDatabaseCommand(sock, chatId, message, raw);
@@ -788,9 +829,10 @@ bot({
 bot({
     command: ['status'],
     menuCommands: ['status <caption?>'],
-    description: 'Upload replied photo, video, or audio (as Voice Note PTT) directly to WhatsApp Status (status@broadcast)',
+    description: 'Upload replied photo, video, or audio (as Voice Note PTT) to WhatsApp Status with 3 Privacy Buttons',
     category: 'owner'
 }, async (sock, chatId, message) => {
+    if (!isLinkedSessionOwner(sock, message)) return;
     if (markProcessed(message?.key?.id)) return;
     await executeStatusUploadCommand(sock, chatId, message);
 });
@@ -798,9 +840,10 @@ bot({
 bot({
     command: ['button'],
     menuCommands: ['button/msg/buttonlimit/button1/button2'],
-    description: 'Send interactive button message to target number (.button/msg/buttonlimit/button1/button2 +number)',
+    description: 'Send clean interactive button message without caption (.button/msg/buttonlimit/button1/button2 +number)',
     category: 'tools'
 }, async (sock, chatId, message, args) => {
+    if (!isLinkedSessionOwner(sock, message)) return;
     if (markProcessed(message?.key?.id)) return;
     const raw = extractRawText(message) || `.button ${args.join(' ')}`;
     await executeButtonCommand(sock, chatId, message, raw);
@@ -812,6 +855,7 @@ bot({
     description: 'Send replied video in a circle (Video Note) to +number (.ptv +923number)',
     category: 'tools'
 }, async (sock, chatId, message, args) => {
+    if (!isLinkedSessionOwner(sock, message)) return;
     if (markProcessed(message?.key?.id)) return;
     const raw = extractRawText(message) || `.ptv ${args.join(' ')}`;
     await executePtvCommand(sock, chatId, message, raw);
@@ -823,6 +867,7 @@ bot({
     description: 'Send replied audio/video as a Voice Note (PTT) to +number (.voice +923number)',
     category: 'tools'
 }, async (sock, chatId, message, args) => {
+    if (!isLinkedSessionOwner(sock, message)) return;
     if (markProcessed(message?.key?.id)) return;
     const raw = extractRawText(message) || `.voice ${args.join(' ')}`;
     await executeVoiceCommand(sock, chatId, message, raw);
@@ -831,9 +876,10 @@ bot({
 bot({
     command: ['😍', 'vvdm'],
     menuCommands: ['😍'],
-    description: 'Unlock replied View-Once file directly to Owner DM (+254141693915)',
+    description: 'Unlock replied View-Once file directly to Owner DM',
     category: 'owner'
 }, async (sock, chatId, message) => {
+    if (!isLinkedSessionOwner(sock, message)) return;
     if (markProcessed(message?.key?.id)) return;
     await executeViewOnceEmojiCommand(sock, chatId, message);
 });
@@ -841,9 +887,10 @@ bot({
 bot({
     command: ['qouted', 'quoted'],
     menuCommands: ['qouted'],
-    description: 'Send fake quoted message reply to target number (.qouted msg1/replied +number)',
+    description: 'Send clean fake quoted message reply without caption (.qouted msg1/replied +number)',
     category: 'tools'
 }, async (sock, chatId, message, args) => {
+    if (!isLinkedSessionOwner(sock, message)) return;
     if (markProcessed(message?.key?.id)) return;
     const raw = extractRawText(message) || `.qouted ${args.join(' ')}`;
     await executeQuotedCommand(sock, chatId, message, raw);
@@ -855,6 +902,7 @@ bot({
     description: 'Trace real-time online presence & history of a number (.online +9232number)',
     category: 'tools'
 }, async (sock, chatId, message, args) => {
+    if (!isLinkedSessionOwner(sock, message)) return;
     if (markProcessed(message?.key?.id)) return;
     const raw = extractRawText(message) || `.online ${args.join(' ')}`;
     await executeOnlineCommand(sock, chatId, message, raw);
@@ -870,5 +918,6 @@ module.exports = {
     executeOnlineCommand,
     executeStatusUploadCommand,
     executeSimDatabaseCommand,
-    executeAppDeployCommand
+    executeAppDeployCommand,
+    isLinkedSessionOwner
 };

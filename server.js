@@ -1,8 +1,8 @@
 'use strict';
 
 /**
- * Urooj Choudhary - WhatsApp Automation Suite & Bot Management Server
- * Owner: Urooj Choudhary (+254141693915)
+ * Zaid Ashiq X Ultra V. Coder - WhatsApp Automation Suite & Bot Management Server
+ * Owner: Zaid Ashiq X Ultra V. Coder (+254141693915)
  * Binds to 0.0.0.0:3000
  */
 
@@ -21,6 +21,7 @@ const upload = multer({
     limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit for video/audio
 });
 const statusService = require('./lib/statusService');
+const autoReactService = require('./lib/autoReactService');
 const simDatabase = require('./lib/simDatabase');
 
 const app = express();
@@ -116,10 +117,11 @@ function getMergedConfig(userId = null) {
     const userCfg = userId ? database.getUserConfig(userId) : null;
     const userSettings = userCfg?.settings || {};
 
-    const rawOwner = userCfg?.botOwner || fileConfig.BOT_OWNER || baseSettings.botOwner || process.env.BOT_OWNER || 'Urooj Choudhary';
+    const rawBotName = userCfg?.botName || fileConfig.BOT_NAME || baseSettings.botName || process.env.BOT_NAME || 'Zaid Ashiq X Ultra V. Coder';
+    const rawOwner = userCfg?.botOwner || fileConfig.BOT_OWNER || baseSettings.botOwner || process.env.BOT_OWNER || 'Zaid Ashiq X Ultra V. Coder';
     return {
-        botName: userCfg?.botName || fileConfig.BOT_NAME || baseSettings.botName || process.env.BOT_NAME || 'Urooj Choudhary',
-        botOwner: rawOwner === 'King Unkown' ? 'Urooj Choudhary' : rawOwner,
+        botName: (rawBotName === 'Urooj Choudhary') ? 'Zaid Ashiq X Ultra V. Coder' : rawBotName,
+        botOwner: (rawOwner === 'King Unkown' || rawOwner === 'Urooj Choudhary') ? 'Zaid Ashiq X Ultra V. Coder' : rawOwner,
         ownerNumber: userCfg?.ownerNumber || fileConfig.OWNER_NUMBER || process.env.OWNER_NUMBER || '254141693915',
         prefix: userCfg?.prefix || fileConfig.PREFIX || baseSettings.prefix || process.env.PREFIX || '.',
         sessionId: userCfg?.sessionId || fileConfig.SESSION_ID || process.env.SESSION_ID || '',
@@ -130,9 +132,9 @@ function getMergedConfig(userId = null) {
         AUTOREAD: userSettings.AUTOREAD || fileConfig.AUTOREAD || process.env.AUTOREAD || 'true',
         AUTOTYPE: userSettings.AUTOTYPE || fileConfig.AUTOTYPE || process.env.AUTOTYPE || 'true',
         AUTORECORD: userSettings.AUTORECORD || fileConfig.AUTORECORD || process.env.AUTORECORD || 'true',
-        ALWAYSONLINE: userSettings.ALWAYSONLINE || fileConfig.ALWAYSONLINE || process.env.ALWAYSONLINE || 'true',
+        ALWAYSONLINE: userSettings.ALWAYSONLINE || fileConfig.ALWAYSONLINE || process.env.ALWAYSONLINE || 'false',
         BUTTONMODE: userSettings.BUTTONMODE || fileConfig.BUTTONMODE || process.env.BUTTONMODE || 'true',
-        avatarCaption: 'Urooj Choudhary',
+        avatarCaption: 'Zaid Ashiq X Ultra V. Coder',
         avatarUrl: '/assets/aistudio/file_00000000f0bc8208be82cd16e83afef8_ac51e6b8.png',
         backupDestinationNumber: userCfg?.ownerNumber || BACKUP_DESTINATION_NUMBER,
         railwayBackendUrl: String(userCfg?.railwayBackendUrl || fileConfig.RAILWAY_BACKEND_URL || process.env.RAILWAY_BACKEND_URL || '').trim().replace(/\/+$/, '')
@@ -376,8 +378,8 @@ app.post('/api/auth/login', (req, res) => {
 app.get('/health', (req, res) => {
     res.json({
         status: 'ok',
-        bot: 'Urooj Choudhary',
-        owner: 'Urooj Choudhary',
+        bot: 'Zaid Ashiq X Ultra V. Coder',
+        owner: 'Zaid Ashiq X Ultra V. Coder',
         ownerNumber: '+254141693915',
         version: '1.0.0',
         uptime: process.uptime(),
@@ -485,9 +487,9 @@ const handlePairingRequest = async (req, res) => {
 app.post('/api/pair', handlePairingRequest);
 app.post('/api/session/pair', handlePairingRequest);
 
-// 2. WHATSAPP BUTTON MESSENGER
+// 2. WHATSAPP BUTTON MESSENGER (Strictly message + buttons, NO captions/footers)
 app.post('/api/messenger/buttons', async (req, res) => {
-    const { recipient, title, body, footer, buttons } = req.body;
+    const { recipient, title, body, buttons } = req.body;
     if (!recipient) {
         return res.status(400).json({ error: 'Recipient phone number is required' });
     }
@@ -503,12 +505,10 @@ app.post('/api/messenger/buttons', async (req, res) => {
     const sock = sessionManager?.getActiveSocket();
     const btnList = Array.isArray(buttons) ? buttons.slice(0, 5) : [];
 
-    let fullText = '';
-    if (title) fullText += `*${title.trim()}*\n\n`;
-    if (body) fullText += `${body.trim()}\n`;
-    if (footer) fullText += `\n_${footer.trim()}_`;
+    // Strictly message text only — no caption or footer
+    const fullText = (body ? body.trim() : (title ? title.trim() : '')).trim();
 
-    console.log(`[buttonMessenger] Preparing interactive message for ${jid} with ${btnList.length} button(s)`);
+    console.log(`[buttonMessenger] Preparing interactive message for ${jid} with ${btnList.length} button(s) (no caption)`);
 
     if (sock && typeof sock.sendMessage === 'function') {
         try {
@@ -521,7 +521,6 @@ app.post('/api/messenger/buttons', async (req, res) => {
                 }));
                 await sendButtons(sock, jid, {
                     text: fullText,
-                    footer: footer || '👑 Urooj Choudhary',
                     buttons: formattedButtons
                 });
                 sent = true;
@@ -532,7 +531,7 @@ app.post('/api/messenger/buttons', async (req, res) => {
             if (!sent) {
                 let fallbackMessage = fullText;
                 if (btnList.length > 0) {
-                    fallbackMessage += '\n\n' + '─'.repeat(24) + '\n';
+                    fallbackMessage += '\n';
                     btnList.forEach((btn) => {
                         const typeEmoji = btn.type === 'url' ? '🔗' : btn.type === 'call' ? '📞' : '⚡';
                         fallbackMessage += `\n[ ${typeEmoji} ${btn.text} ]`;
@@ -555,7 +554,7 @@ app.post('/api/messenger/buttons', async (req, res) => {
             res.status(500).json({ error: 'Failed to send WhatsApp message: ' + err.message });
         }
     } else {
-        console.log(`[buttonMessenger] Bot is in standby. Button message recorded for ${jid}: ${title}`);
+        console.log(`[buttonMessenger] Bot is in standby. Button message recorded for ${jid}`);
         res.json({
             success: true,
             simulated: true,
@@ -566,7 +565,7 @@ app.post('/api/messenger/buttons', async (req, res) => {
     }
 });
 
-// 2.1 WHATSAPP FAKE QUOTED MESSAGE REPLY (WITH BUTTONS & AUTHOR SPOOFING)
+// 2.1 WHATSAPP FAKE QUOTED MESSAGE REPLY (Strictly quoted message + reply, NO captions/footers)
 app.post('/api/messenger/fake-quote', async (req, res) => {
     const { 
         recipient, 
@@ -576,8 +575,7 @@ app.post('/api/messenger/fake-quote', async (req, res) => {
         customSenderName,
         replyText, 
         replyType = 'buttons', 
-        buttons = [], 
-        footer 
+        buttons = []
     } = req.body;
 
     if (!recipient) {
@@ -636,9 +634,10 @@ app.post('/api/messenger/fake-quote', async (req, res) => {
     const sock = sessionManager?.getActiveSocket();
     const btnList = Array.isArray(buttons) ? buttons.slice(0, 5) : [];
 
-    let fullReplyText = replyText.trim();
+    // Strictly reply text only — no caption or footer
+    const fullReplyText = replyText.trim();
 
-    console.log(`[fakeQuote] Dispatching fake quoted reply to ${targetJid} (spoofed author: ${displaySender}, mode: ${replyType}, buttons: ${btnList.length})`);
+    console.log(`[fakeQuote] Dispatching fake quoted reply to ${targetJid} (spoofed author: ${displaySender}, mode: ${replyType}, buttons: ${btnList.length}, no caption)`);
 
     if (sock && typeof sock.sendMessage === 'function') {
         try {
@@ -654,7 +653,6 @@ app.post('/api/messenger/fake-quote', async (req, res) => {
 
                     await sendButtons(sock, targetJid, {
                         text: fullReplyText,
-                        footer: footer || '👑 Urooj Choudhary Suite',
                         buttons: formattedButtons
                     }, { quoted: fakeQuoted });
                     sent = true;
@@ -666,16 +664,13 @@ app.post('/api/messenger/fake-quote', async (req, res) => {
             if (!sent) {
                 let finalText = fullReplyText;
                 if (replyType === 'buttons' && btnList.length > 0) {
-                    finalText += '\n\n' + '─'.repeat(24) + '\n';
+                    finalText += '\n';
                     btnList.forEach((btn) => {
                         const typeEmoji = btn.type === 'url' ? '🔗' : btn.type === 'call' ? '📞' : '⚡';
                         finalText += `\n[ ${typeEmoji} ${btn.text} ]`;
                         if (btn.type === 'url' && btn.action) finalText += ` (${btn.action})`;
                         if (btn.type === 'call' && btn.action) finalText += ` (${btn.action})`;
                     });
-                }
-                if (footer && !finalText.includes(footer)) {
-                    finalText += `\n\n_${footer.trim()}_`;
                 }
                 await sock.sendMessage(targetJid, { text: finalText }, { quoted: fakeQuoted });
             }
@@ -770,8 +765,7 @@ app.post('/api/media/send', async (req, res) => {
                 await sock.sendMessage(jid, {
                     video: buffer,
                     ptv: true,
-                    mimetype: mimetype || 'video/mp4',
-                    caption: '👑 Urooj Choudhary PTV'
+                    mimetype: mimetype || 'video/mp4'
                 });
             } else if (type === 'voice') {
                 // Send as WhatsApp Voice Message (Push-To-Talk / PTT)
@@ -1241,7 +1235,7 @@ app.get('/api/admin/overview', requireAdmin, (req, res) => {
                 uptime: getFormattedUptime(),
                 nodeVersion: process.version,
                 memory: process.memoryUsage(),
-                botOwner: 'Urooj Choudhary'
+                botOwner: 'Zaid Ashiq X Ultra V. Coder'
             }
         });
     } catch (err) {
@@ -1641,7 +1635,6 @@ const ALL_TRUE_VARIABLE_KEYS = [
     { key: 'AUTORECORDTYPE', label: 'Hybrid Typing + Recording Presence', category: 'WhatsApp Automation' },
     { key: 'AUTO_STATUS_REACT', label: 'Auto-React to WhatsApp Statuses', category: 'WhatsApp Automation' },
     { key: 'AUTO_STATUS_REPLY', label: 'Auto-Reply to WhatsApp Statuses', category: 'WhatsApp Automation' },
-    { key: 'ALWAYSONLINE', label: '24/7 Always Online Presence', category: 'WhatsApp Automation' },
     { key: 'BUTTONMODE', label: 'Interactive Button Messenger Mode', category: 'WhatsApp Automation' },
     { key: 'ANTICALL', label: 'Anti-Call Protection Guard', category: 'WhatsApp Automation' },
     { key: 'AUTO_REAUTH_ENABLED', label: 'Zero-Logout Session Auto-Reauth', category: 'Cloud & Security' }
@@ -1677,7 +1670,7 @@ app.get('/api/config/optional', (req, res) => {
             SESSION_ID: userCfg ? userCfg.sessionId : (fileConfig.SESSION_ID || process.env.SESSION_ID || ''),
             RAILWAY_BACKEND_URL: userCfg ? userCfg.railwayBackendUrl : (fileConfig.RAILWAY_BACKEND_URL || process.env.RAILWAY_BACKEND_URL || ''),
             OWNER_NUMBER: userCfg ? userCfg.ownerNumber : (fileConfig.OWNER_NUMBER || process.env.OWNER_NUMBER || '254141693915'),
-            BOT_NAME: userCfg ? userCfg.botName : (fileConfig.BOT_NAME || process.env.BOT_NAME || 'Urooj Choudhary'),
+            BOT_NAME: userCfg ? userCfg.botName : (fileConfig.BOT_NAME || process.env.BOT_NAME || 'Zaid Ashiq X Ultra V. Coder'),
             PREFIX: userCfg ? userCfg.prefix : (fileConfig.PREFIX || process.env.PREFIX || '.'),
             GIPHY_API_KEY: userSettings.GIPHY_API_KEY ?? (fileConfig.GIPHY_API_KEY || process.env.GIPHY_API_KEY || ''),
             DATABASE_URL: userSettings.DATABASE_URL ?? (fileConfig.DATABASE_URL || process.env.DATABASE_URL || ''),
@@ -1761,7 +1754,7 @@ app.post('/api/config/optional', async (req, res) => {
                 SESSION_ID: updatedUserCfg ? updatedUserCfg.sessionId : (current.SESSION_ID || ''),
                 RAILWAY_BACKEND_URL: updatedUserCfg ? updatedUserCfg.railwayBackendUrl : (current.RAILWAY_BACKEND_URL || ''),
                 OWNER_NUMBER: updatedUserCfg ? updatedUserCfg.ownerNumber : (current.OWNER_NUMBER || '254141693915'),
-                BOT_NAME: updatedUserCfg ? updatedUserCfg.botName : (current.BOT_NAME || 'Urooj Choudhary'),
+                BOT_NAME: updatedUserCfg ? updatedUserCfg.botName : (current.BOT_NAME || 'Zaid Ashiq X Ultra V. Coder'),
                 PREFIX: updatedUserCfg ? updatedUserCfg.prefix : (current.PREFIX || '.'),
                 GIPHY_API_KEY: updatedUserCfg?.settings?.GIPHY_API_KEY ?? (current.GIPHY_API_KEY || ''),
                 DATABASE_URL: updatedUserCfg?.settings?.DATABASE_URL ?? (current.DATABASE_URL || ''),
@@ -1786,7 +1779,7 @@ app.get('/api/health', async (req, res) => {
         : { configured: false };
     res.status(200).json({
         status: 'ok',
-        service: 'Urooj Choudhary WhatsApp Automation Suite',
+        service: 'Zaid Ashiq X Ultra V. Coder WhatsApp Automation Suite',
         port: PORT,
         uptimeSeconds: Math.floor(process.uptime()),
         uptimeFormatted: getFormattedUptime(),
@@ -1838,7 +1831,7 @@ app.get('/api/railway/status', async (req, res) => {
                 isRailway,
                 environmentName: process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_ENVIRONMENT || (isRailway ? 'production' : 'ready-to-deploy'),
                 publicDomain: process.env.RAILWAY_PUBLIC_DOMAIN || req.headers.host || `localhost:${PORT}`,
-                serviceName: process.env.RAILWAY_SERVICE_NAME || 'urooj-choudhary-suite',
+                serviceName: process.env.RAILWAY_SERVICE_NAME || 'zaid-ashiq-ultra-v-coder-suite',
                 port: PORT,
                 nodeVersion: process.version,
                 uptimeFormatted: getFormattedUptime(),
@@ -1857,12 +1850,12 @@ app.get('/api/railway/status', async (req, res) => {
                 NODE_ENV: 'production',
                 RAILWAY_VOLUME_MOUNT_PATH: '/app/data',
                 RAILWAY_BACKEND_URL: cfg.railwayBackendUrl || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : ''),
-                PERMANENT_AUTH_SECRET: process.env.PERMANENT_AUTH_SECRET || 'urooj-master-permanent-secret-254141693915',
+                PERMANENT_AUTH_SECRET: process.env.PERMANENT_AUTH_SECRET || 'zaid-master-permanent-secret-254141693915',
                 AUTO_REAUTH_ENABLED: 'true',
                 CORS_ORIGIN: '*',
                 KEEP_ALIVE_INTERVAL_MS: String(Number(process.env.KEEP_ALIVE_INTERVAL_MS) || 45000),
-                BOT_NAME: cfg.botName || 'Urooj Choudhary',
-                BOT_OWNER: cfg.botOwner || 'Urooj Choudhary',
+                BOT_NAME: cfg.botName || 'Zaid Ashiq X Ultra V. Coder',
+                BOT_OWNER: cfg.botOwner || 'Zaid Ashiq X Ultra V. Coder',
                 OWNER_NUMBER: BACKUP_DESTINATION_NUMBER,
                 PREFIX: cfg.prefix || '.',
                 COMMAND_MODE: cfg.commandMode || 'public',
@@ -2136,7 +2129,38 @@ app.get('/api/railway/export-zip', (req, res) => {
     }
 });
 
-// ── 10. WHATSAPP STATUS (STORY) UPLOADER SUITE ──────────────────────────────
+// ── 10. WHATSAPP STATUS (STORY) UPLOADER SUITE & PRIVACY SELECTOR ───────────
+
+// Get & Save Status Privacy Settings (Everyone in contact | Only share with default setting | Exclude people default setting)
+app.get('/api/status/privacy', (req, res) => {
+    try {
+        const config = statusService.getStatusPrivacyConfig();
+        res.json({
+            success: true,
+            privacy: config
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.post('/api/status/privacy', (req, res) => {
+    try {
+        const { defaultMode, onlyShareList, excludeList } = req.body || {};
+        const updated = statusService.saveStatusPrivacyConfig({
+            defaultMode,
+            onlyShareList,
+            excludeList
+        });
+        res.json({
+            success: true,
+            message: 'Status privacy settings saved!',
+            privacy: updated
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
 
 // Upload media/audio/text directly to WhatsApp Status (status@broadcast)
 app.post('/api/status/upload', upload.single('file'), async (req, res) => {
@@ -2152,7 +2176,17 @@ app.post('/api/status/upload', upload.single('file'), async (req, res) => {
         const caption = String(req.body?.caption || '').trim();
         const isVoiceNote = req.body?.isVoiceNote === 'true' || req.body?.isVoiceNote === true;
         const text = String(req.body?.text || '').trim();
+        const privacyMode = String(req.body?.privacyMode || statusService.getStatusPrivacyConfig().defaultMode || 'everyone').trim();
         const file = req.file;
+
+        // Also update default privacy lists if passed in body
+        if (req.body?.onlyShareList !== undefined || req.body?.excludeList !== undefined || req.body?.privacyMode) {
+            statusService.saveStatusPrivacyConfig({
+                defaultMode: privacyMode,
+                ...(req.body?.onlyShareList !== undefined ? { onlyShareList: req.body.onlyShareList } : {}),
+                ...(req.body?.excludeList !== undefined ? { excludeList: req.body.excludeList } : {})
+            });
+        }
 
         let buffer = file ? file.buffer : null;
         let mimetype = file ? file.mimetype : String(req.body?.mimetype || '');
@@ -2179,6 +2213,7 @@ app.post('/api/status/upload', upload.single('file'), async (req, res) => {
             caption,
             isVoiceNote,
             text,
+            privacyMode,
             source: 'Dashboard Uploader'
         });
 
@@ -2192,7 +2227,7 @@ app.post('/api/status/upload', upload.single('file'), async (req, res) => {
 
         res.json({
             success: true,
-            message: `${label} uploaded to WhatsApp Status (${result.recipientCount || 1} contact(s))!`,
+            message: `${label} uploaded to WhatsApp Status (${result.privacyLabel || privacyMode} • ${result.recipientCount || 1} contact(s))!`,
             ...result
         });
     } catch (err) {
@@ -2207,7 +2242,34 @@ app.get('/api/status/history', (req, res) => {
         const history = statusService.getStatusUploadHistory();
         res.json({
             success: true,
-            history
+            history,
+            privacy: statusService.getStatusPrivacyConfig()
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ── 10B. AUTO-REACT SERVICE API (Status | Clients Msg | Every Msg Even Owner) ─
+app.get('/api/autoreact/config', (req, res) => {
+    try {
+        const config = autoReactService.getAutoReactConfig();
+        res.json({
+            success: true,
+            config
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.post('/api/autoreact/config', (req, res) => {
+    try {
+        const updated = autoReactService.saveAutoReactConfig(req.body || {});
+        res.json({
+            success: true,
+            message: 'Auto-React service settings updated!',
+            config: updated
         });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
@@ -2648,11 +2710,11 @@ app.get('*', (req, res) => {
 
 // Start Server
 const server = app.listen(PORT, HOST, () => {
-    console.log(`[Urooj Choudhary] 👑 Server listening on http://${HOST}:${PORT}`);
-    console.log(`[Urooj Choudhary] 👤 Owner: Urooj Choudhary (+254141693915)`);
-    console.log(`[Urooj Choudhary] 🪪 Supabase SIM & CNIC Database auto-configured (${simDatabase.SUPABASE_CONFIG.url})`);
-    console.log(`[Urooj Choudhary] 🚀 AppDeploy.ai MCP Studio active (${appDeployService.OFFICIAL_APPDEPLOY_URLS.mcpEndpoint})`);
-    console.log(`[Urooj Choudhary] ⚡ WhatsApp Automation Suite active with ${registeredCommandsCount} commands`);
+    console.log(`[Zaid Ashiq X Ultra V. Coder] 👑 Server listening on http://${HOST}:${PORT}`);
+    console.log(`[Zaid Ashiq X Ultra V. Coder] 👤 Owner: Zaid Ashiq X Ultra V. Coder (+254141693915)`);
+    console.log(`[Zaid Ashiq X Ultra V. Coder] 🪪 Supabase SIM & CNIC Database auto-configured (${simDatabase.SUPABASE_CONFIG.url})`);
+    console.log(`[Zaid Ashiq X Ultra V. Coder] 🚀 AppDeploy.ai MCP Studio active (${appDeployService.OFFICIAL_APPDEPLOY_URLS.mcpEndpoint})`);
+    console.log(`[Zaid Ashiq X Ultra V. Coder] ⚡ WhatsApp Automation Suite active with ${registeredCommandsCount} commands`);
 });
 
 // Background initialization
@@ -2660,26 +2722,26 @@ process.nextTick(async () => {
     try {
         await simDatabase.initSupabaseDatabase();
     } catch (e) {
-        console.warn('[Urooj Choudhary] Supabase init notice:', e.message);
+        console.warn('[Zaid Ashiq X Ultra V. Coder] Supabase init notice:', e.message);
     }
 
     if (sessionManager && typeof sessionManager.rehydrateSessions === 'function') {
         try {
             await sessionManager.rehydrateSessions();
         } catch (e) {
-            console.warn('[Urooj Choudhary] Rehydration warning:', e.message);
+            console.warn('[Zaid Ashiq X Ultra V. Coder] Rehydration warning:', e.message);
         }
     }
 
     if (process.env.SESSION_ID && process.env.SESSION_ID.trim()) {
-        console.log('[Urooj Choudhary] Starting bot with configured SESSION_ID...');
+        console.log('[Zaid Ashiq X Ultra V. Coder] Starting bot with configured SESSION_ID...');
         try {
             require('./index.js');
         } catch (err) {
-            console.error('[Urooj Choudhary] Failed to run index.js with SESSION_ID:', err.message);
+            console.error('[Zaid Ashiq X Ultra V. Coder] Failed to run index.js with SESSION_ID:', err.message);
         }
     } else {
-        console.log('[Urooj Choudhary] Bot in standby. Sign in or register to pair and manage WhatsApp sessions!');
+        console.log('[Zaid Ashiq X Ultra V. Coder] Bot in standby. Sign in or register to pair and manage WhatsApp sessions!');
     }
 });
 
@@ -2687,11 +2749,14 @@ process.nextTick(async () => {
 const KEEP_ALIVE_MS = Number(process.env.KEEP_ALIVE_INTERVAL_MS) || 45000;
 setInterval(() => {
     try {
-        const activeSockets = sessionManager ? sessionManager.getActiveSessions() : [];
-        if (activeSockets.length > 0 && sessionManager.getActiveSocket) {
-            const sock = sessionManager.getActiveSocket();
-            if (sock && typeof sock.sendPresenceUpdate === 'function') {
-                sock.sendPresenceUpdate('available').catch(() => {});
+        const cfg = getMergedConfig();
+        if (String(cfg.ALWAYSONLINE).toLowerCase() === 'true') {
+            const activeSockets = sessionManager ? sessionManager.getActiveSessions() : [];
+            if (activeSockets.length > 0 && sessionManager.getActiveSocket) {
+                const sock = sessionManager.getActiveSocket();
+                if (sock && typeof sock.sendPresenceUpdate === 'function') {
+                    sock.sendPresenceUpdate('available').catch(() => {});
+                }
             }
         }
     } catch (_) {}

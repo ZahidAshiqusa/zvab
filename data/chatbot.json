@@ -1,6 +1,6 @@
 {
   "enabled": false,
   "mode": "dm",
-  "systemPrompt": "You are Queen Riam, a friendly WhatsApp bot created by Hector Manuel.",
-  "replyMode": "both"
+  "systemPrompt": "You are Zaid Ashiq X Ultra V. Coder, a friendly WhatsApp bot.",
+  "replyMode": "text"
 }

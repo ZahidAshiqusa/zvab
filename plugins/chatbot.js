@@ -36,6 +36,7 @@ function loadConfig(sock) {
     }
     try {
         const cfg = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+        cfg.enabled = false;
         if (!cfg.systemPrompt) cfg.systemPrompt = DEFAULT_PROMPT;
         if (!cfg.replyMode) cfg.replyMode = 'text';
         return cfg;
@@ -175,84 +176,8 @@ async function queryAI(systemPrompt, messages, userMessage) {
 }
 
 async function handleChatbot(sock, chatId, message, senderId, userMessage) {
-    const cfg = loadConfig(sock);
-    if (!cfg.enabled) return;
-
-    if (message.key.fromMe) return;
-    if (chatId.endsWith('@newsletter')) return;
-
-    const isGroup = chatId.endsWith('@g.us');
-    if (cfg.mode === 'dm' && isGroup) return;
-    if (cfg.mode === 'group' && !isGroup) return;
-
-    if (!userMessage || userMessage.length < 2) return;
-
-    console.log(`[CHATBOT] Processing message from ${senderId} in ${isGroup ? 'group' : 'DM'}: "${userMessage.slice(0, 50)}"`);
-
-    try {
-        if (cfg.replyMode === 'audio' || cfg.replyMode === 'both') {
-            await sock.sendPresenceUpdate('recording', chatId);
-        } else {
-            await sock.sendPresenceUpdate('composing', chatId);
-        }
-        await sock.sendMessage(chatId, {
-            react: { text: '💭', key: message.key }
-        });
-
-        const history = loadHistory(sock);
-        cleanOldHistory(history);
-        const conversation = getConversation(history, chatId);
-
-        const result = await queryAI(cfg.systemPrompt, conversation, userMessage);
-
-        if (result) {
-            addToConversation(history, chatId, 'user', userMessage);
-            addToConversation(history, chatId, 'assistant', result.answer);
-            saveHistory(history, sock);
-
-            if (cfg.replyMode === 'audio') {
-                try {
-                    const audioBuffer = await textToAudio(result.answer);
-                    await sock.sendMessage(chatId, {
-                        audio: audioBuffer,
-                        mimetype: 'audio/mpeg',
-                        fileName: 'riam.mp3',
-                        ptt: false,
-                    });
-                } catch (ttsErr) {
-                    console.error('[CHATBOT] TTS failed, sending text:', ttsErr.message);
-                    await sock.sendMessage(chatId, { text: result.answer });
-                }
-            } else if (cfg.replyMode === 'both') {
-                await sock.sendMessage(chatId, { text: result.answer });
-                try {
-                    const audioBuffer = await textToAudio(result.answer);
-                    await sock.sendMessage(chatId, {
-                        audio: audioBuffer,
-                        mimetype: 'audio/mpeg',
-                        fileName: 'riam.mp3',
-                        ptt: false,
-                    });
-                } catch (ttsErr) {
-                    console.error('[CHATBOT] TTS failed:', ttsErr.message);
-                }
-            } else {
-                await sock.sendMessage(chatId, { text: result.answer });
-            }
-
-            await sock.sendPresenceUpdate('paused', chatId);
-            await sock.sendMessage(chatId, {
-                react: { text: '🤖', key: message.key }
-            });
-        } else {
-            await sock.sendPresenceUpdate('paused', chatId);
-            await sock.sendMessage(chatId, {
-                react: { text: '', key: message.key }
-            });
-        }
-    } catch (err) {
-        console.error('[CHATBOT] Error:', err.message);
-    }
+    // Auto-reply by ChatGPT is turned OFF by default
+    return;
 }
 
 async function chatbotCommand(sock, chatId, message, args, rawQuery) {
@@ -295,7 +220,7 @@ async function chatbotCommand(sock, chatId, message, args, rawQuery) {
             try {
                 await sendButtons(sock, chatId, {
                     text,
-                    footer: 'Urooj Choudhary 👑',
+                    footer: 'Zaid Ashiq X Ultra V. Coder 👑',
                     buttons: [
                         { id: '.chatbot on',  text: getLang(sock).btn_turn_on  },
                         { id: '.chatbot off', text: getLang(sock).btn_turn_off },
@@ -319,11 +244,10 @@ async function chatbotCommand(sock, chatId, message, args, rawQuery) {
     }
 
     if (sub === 'on') {
-        cfg.enabled = true;
-        saveConfig(cfg);
-        const modeText = cfg.mode === 'dm' ? 'DMs' : cfg.mode === 'group' ? 'Groups' : 'Everywhere';
+        cfg.enabled = false;
+        saveConfig(cfg, sock);
         await sock.sendMessage(chatId, {
-            text: getLang(sock).chatbot_on.replace('{mode}', modeText)
+            text: getLang(sock).chatbot_off
         });
         return;
     }
@@ -339,14 +263,14 @@ async function chatbotCommand(sock, chatId, message, args, rawQuery) {
 
     if (sub === 'dm') {
         cfg.mode = 'dm';
-        saveConfig(cfg);
+        saveConfig(cfg, sock);
         await sock.sendMessage(chatId, { text: getLang(sock).chatbot_dm_only });
         return;
     }
 
     if (sub === 'group') {
         cfg.mode = 'group';
-        saveConfig(cfg);
+        saveConfig(cfg, sock);
         await sock.sendMessage(chatId, { text: getLang(sock).chatbot_groups_only });
         return;
     }
