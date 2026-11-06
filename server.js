@@ -1159,6 +1159,70 @@ app.post('/api/session/backup', async (req, res) => {
     }
 });
 
+// ☁️ Get Dual-Sync (Supabase + Railway Volume) Status & Zero-Logout Guard Info
+app.get('/api/session/cloud-sync', async (req, res) => {
+    try {
+        const status = sessionManager?.getCloudSyncStatus
+            ? await sessionManager.getCloudSyncStatus()
+            : { configured: false, autoLogoutDisabled: true };
+        const vol = getVolumeDiagnostics();
+        res.json({
+            success: true,
+            autoLogoutDisabled: true,
+            supabase: status,
+            railwayVolume: vol
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ☁️ Trigger Manual Sync of All Sessions Between Railway Volume & Supabase Cloud
+app.post('/api/session/cloud-sync', async (req, res) => {
+    try {
+        if (!sessionManager || typeof sessionManager.syncAllSessionsToCloud !== 'function') {
+            return res.status(500).json({ error: 'Session cloud sync engine not available' });
+        }
+        const report = await sessionManager.syncAllSessionsToCloud();
+        res.json({
+            success: true,
+            message: `Dual-Sync complete: ${report.localSessionsCount} local Railway Volume session(s), ${report.syncedToSupabase} synced to Supabase, ${report.restoredFromSupabase} restored from Supabase.`,
+            ...report
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to sync sessions: ' + err.message });
+    }
+});
+
+// ☁️ Save Supabase Credentials (Supports both SUPABASE_URL + KEY and Postgres SUPABASE_DB_URL)
+app.post('/api/session/cloud-config', async (req, res) => {
+    try {
+        const { supabaseUrl, supabaseKey, supabaseDbUrl } = req.body || {};
+        if (!sessionManager || typeof sessionManager.configureSupabaseSync !== 'function') {
+            return res.status(500).json({ error: 'Supabase configuration engine not available' });
+        }
+        const diagnostics = await sessionManager.configureSupabaseSync({
+            supabaseUrl,
+            supabaseKey,
+            supabaseDbUrl
+        });
+        let syncReport = null;
+        if (diagnostics.configured && typeof sessionManager.syncAllSessionsToCloud === 'function') {
+            syncReport = await sessionManager.syncAllSessionsToCloud().catch(() => null);
+        }
+        res.json({
+            success: true,
+            message: diagnostics.configured
+                ? `Supabase (${diagnostics.mode}) connected & synced with Railway Volume! Zero-Logout protection is active.`
+                : 'Saved settings. Add SUPABASE_DB_URL or SUPABASE_URL + Key to enable cloud mirroring alongside Railway Volume.',
+            diagnostics,
+            syncReport
+        });
+    } catch (err) {
+        res.status(400).json({ error: 'Failed to configure Supabase sync: ' + err.message });
+    }
+});
+
 // 7. SUPER ADMIN PANEL (Role-based access control)
 app.get('/api/admin/overview', requireAdmin, (req, res) => {
     try {
@@ -1714,9 +1778,12 @@ app.post('/api/config/optional', async (req, res) => {
 
 // ── 9. RAILWAY CLOUD DEPLOYMENT & PERSISTENT VOLUME HUB ─────────────────
 // Zero-downtime Railway Healthcheck Endpoint
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
     const vol = getVolumeDiagnostics();
     const activeSockets = sessionManager ? sessionManager.getActiveSessions() : [];
+    const cloudSync = sessionManager?.getCloudSyncStatus
+        ? await sessionManager.getCloudSyncStatus().catch(() => ({ configured: false }))
+        : { configured: false };
     res.status(200).json({
         status: 'ok',
         service: 'Urooj Choudhary WhatsApp Automation Suite',
@@ -1725,19 +1792,26 @@ app.get('/api/health', (req, res) => {
         uptimeFormatted: getFormattedUptime(),
         volumeWritable: vol.isWritable,
         volumePath: vol.volumePath,
+        sessionFoldersCount: vol.sessionFoldersCount,
         activeSessionsCount: activeSockets.length,
+        autoLogoutDisabled: true,
+        supabaseConfigured: Boolean(cloudSync.configured),
+        supabaseMode: cloudSync.mode || 'local_volume_only',
         timestamp: new Date().toISOString()
     });
 });
 
 // Comprehensive Railway Cloud Status, Volume Diagnostics & Manifests
-app.get('/api/railway/status', (req, res) => {
+app.get('/api/railway/status', async (req, res) => {
     try {
         const vol = getVolumeDiagnostics();
         const cfg = getMergedConfig();
         const activeSockets = sessionManager ? sessionManager.getActiveSessions() : [];
         const activeSessionId = sessionManager?.getSessionIdForNumber() || process.env.SESSION_ID || '';
         const vaultStats = database.getRecoveredStats();
+        const supabaseSync = sessionManager?.getCloudSyncStatus
+            ? await sessionManager.getCloudSyncStatus().catch(() => ({ configured: false }))
+            : { configured: false };
 
         const isRailway = Boolean(
             process.env.RAILWAY_ENVIRONMENT ||
@@ -1758,6 +1832,8 @@ app.get('/api/railway/status', (req, res) => {
 
         res.json({
             success: true,
+            autoLogoutDisabled: true,
+            supabaseSync,
             runtime: {
                 isRailway,
                 environmentName: process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_ENVIRONMENT || (isRailway ? 'production' : 'ready-to-deploy'),

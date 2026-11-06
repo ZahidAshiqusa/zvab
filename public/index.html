@@ -3113,6 +3113,83 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
         </div>
       </div>
 
+      <!-- ☁️ Supabase + Railway Volume Dual-Sync & Zero-Logout Protection Panel -->
+      <div class="p-5 sm:p-6 rounded-2xl bg-slate-900/90 border border-emerald-500/30 shadow-lg space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">☁️</span>
+              <h3 class="text-base sm:text-lg font-extrabold text-white">Supabase &amp; Railway Dual-Sync Session Storage (Zero-Logout Guard)</h3>
+            </div>
+            <p class="text-xs text-slate-400 max-w-3xl">
+              Every WhatsApp session (<code class="text-emerald-300 font-mono">creds.json</code> + signal keys) is saved simultaneously to the <strong>Railway Persistent Volume</strong> (<code class="text-slate-200 font-mono">/app/data/sessions</code>) and <strong>Supabase Cloud</strong>. Automatic session logouts are strictly disabled—sessions only delete when you manually click Delete/Revoke.
+            </p>
+            <div class="flex items-center gap-2 pt-1 text-xs font-mono text-slate-400 flex-wrap">
+              <span id="rwSupabaseSyncBadge" class="text-emerald-400 font-bold">● Dual-Sync: Railway Volume Active</span>
+              <span aria-hidden="true">&middot;</span>
+              <span id="rwZeroLogoutBadge" class="text-amber-300">Zero-Logout Guard: ENABLED (Never Auto-Logs Out)</span>
+              <span aria-hidden="true">&middot;</span>
+              <span id="rwSupabaseCountBadge" class="text-sky-400 tabular-nums">Cloud Sessions: 0</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap shrink-0">
+            <button
+              type="button"
+              onclick="triggerManualSessionCloudSync()"
+              class="px-3.5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition whitespace-nowrap shrink-0 cursor-pointer shadow"
+            >
+              ☁️ Sync All Sessions Now
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
+          <div class="lg:col-span-4">
+            <label for="rwSupabaseDbUrlInput" class="block text-[11px] font-mono text-slate-400 mb-1">
+              SUPABASE_DB_URL (PostgreSQL Connection URI)
+            </label>
+            <input
+              type="password"
+              id="rwSupabaseDbUrlInput"
+              placeholder="postgresql://postgres:[password]@db.[ref].supabase.co:5432/postgres"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+          <div class="lg:col-span-3">
+            <label for="rwSupabaseUrlInput" class="block text-[11px] font-mono text-slate-400 mb-1">
+              SUPABASE_URL (REST Endpoint)
+            </label>
+            <input
+              type="url"
+              id="rwSupabaseUrlInput"
+              placeholder="https://[project-ref].supabase.co"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+          <div class="lg:col-span-3">
+            <label for="rwSupabaseKeyInput" class="block text-[11px] font-mono text-slate-400 mb-1">
+              SUPABASE_KEY (Service Role / Secret Key)
+            </label>
+            <input
+              type="password"
+              id="rwSupabaseKeyInput"
+              placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+          <div class="lg:col-span-2 flex items-center gap-2">
+            <button
+              type="button"
+              onclick="saveSupabaseCloudConfig()"
+              class="w-full py-2.5 px-3.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-bold text-xs transition cursor-pointer whitespace-nowrap"
+            >
+              💾 Save &amp; Connect
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Persistent Volume & Runtime Telemetry KPI Row -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="p-4 rounded-2xl bg-slate-900/75 border border-slate-800">
@@ -6978,6 +7055,21 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
         setIfUnfocused('rwEnvPrefix', envDef.PREFIX);
         setIfUnfocused('rwEnvSessionId', envDef.SESSION_ID);
 
+        const sbSync = data.supabaseSync || {};
+        const sbBadge = document.getElementById('rwSupabaseSyncBadge');
+        if (sbBadge) {
+          sbBadge.textContent = sbSync.configured
+            ? `● Dual-Sync Active: Supabase (${sbSync.mode}) + Railway Volume`
+            : '● Dual-Sync: Railway Volume Active (Add Supabase URI or URL+Key to mirror to Cloud)';
+        }
+        const sbCount = document.getElementById('rwSupabaseCountBadge');
+        if (sbCount) {
+          sbCount.textContent = `Cloud Sessions: ${sbSync.syncedSessionsCount ?? 0} · Local Volume: ${vol.sessionFoldersCount ?? 0}`;
+        }
+        if (sbSync.supabaseUrl) {
+          setIfUnfocused('rwSupabaseUrlInput', sbSync.supabaseUrl);
+        }
+
         updateRailwayEnvPreview();
 
         if (data.manifests) {
@@ -6991,6 +7083,50 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
         }
       } catch (err) {
         console.warn('[railway] fetchRailwayStatus error:', err.message);
+      }
+    }
+
+    async function saveSupabaseCloudConfig() {
+      const supabaseDbUrl = document.getElementById('rwSupabaseDbUrlInput')?.value?.trim() || '';
+      const supabaseUrl = document.getElementById('rwSupabaseUrlInput')?.value?.trim() || '';
+      const supabaseKey = document.getElementById('rwSupabaseKeyInput')?.value?.trim() || '';
+
+      try {
+        showRailwayToast('⏳ Connecting & configuring Supabase + Railway Volume Dual-Sync...');
+        const res = await fetch('/api/session/cloud-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            supabaseDbUrl: supabaseDbUrl || undefined,
+            supabaseUrl: supabaseUrl || undefined,
+            supabaseKey: supabaseKey || undefined
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          showRailwayToast('❌ ' + (data.error || 'Failed to save Supabase config'));
+          return;
+        }
+        showRailwayToast('✅ ' + (data.message || 'Supabase Dual-Sync saved and verified!'));
+        fetchRailwayStatus();
+      } catch (err) {
+        showRailwayToast('❌ Error saving Supabase config: ' + err.message);
+      }
+    }
+
+    async function triggerManualSessionCloudSync() {
+      try {
+        showRailwayToast('⏳ Syncing all WhatsApp sessions between Railway Volume and Supabase Cloud...');
+        const res = await fetch('/api/session/cloud-sync', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          showRailwayToast('❌ ' + (data.error || 'Sync failed'));
+          return;
+        }
+        showRailwayToast('✅ ' + (data.message || 'All sessions synced!'));
+        fetchRailwayStatus();
+      } catch (err) {
+        showRailwayToast('❌ Cloud sync error: ' + err.message);
       }
     }
 
