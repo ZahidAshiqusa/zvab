@@ -803,14 +803,69 @@
           <!-- Rendered dynamically via renderSpringboardAppsGallery() with fallback static icons -->
         </div>
 
+        <!-- New Features Showcase Bar on Dashboard Panel -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+          <div onclick="switchTab('char')" class="p-3.5 rounded-2xl bg-slate-950/85 border border-rose-500/40 hover:border-rose-400 transition cursor-pointer flex items-start gap-3">
+            <span class="text-2xl shrink-0">💞</span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">Channel Auto-React</span>
+                <span class="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-mono text-[9px] font-bold">.char</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                <code class="text-rose-300 font-mono">.char {chanellink} 💞</code> auto-reacts on every new post of any WhatsApp Channel.
+              </p>
+            </div>
+          </div>
+
+          <div onclick="openVaultWithFilter('view_once')" class="p-3.5 rounded-2xl bg-slate-950/85 border border-amber-500/40 hover:border-amber-400 transition cursor-pointer flex items-start gap-3">
+            <span class="text-2xl shrink-0">🔓</span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">Emoji React View-Once</span>
+                <span class="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono text-[9px] font-bold">ANY EMOJI</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                React with <strong>any emoji</strong> on a View-Once photo, video, or audio to open it in Owner DM.
+              </p>
+            </div>
+          </div>
+
+          <div onclick="switchTab('optional')" class="p-3.5 rounded-2xl bg-slate-950/85 border border-emerald-500/40 hover:border-emerald-400 transition cursor-pointer flex items-start gap-3">
+            <span class="text-2xl shrink-0">🧩</span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">All Variables Buttons</span>
+                <span class="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[9px] font-bold">.variable</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                <code class="text-emerald-300 font-mono">.variable</code> lists all boolean + default variables to manage by buttons.
+              </p>
+            </div>
+          </div>
+
+          <div onclick="switchTab('settings')" class="p-3.5 rounded-2xl bg-slate-950/85 border border-cyan-500/40 hover:border-cyan-400 transition cursor-pointer flex items-start gap-3">
+            <span class="text-2xl shrink-0">🥷</span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">Zero-Presence Stealth</span>
+                <span class="px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono text-[9px] font-bold">GHOST</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                Bot never shows <code class="text-cyan-300 font-mono">typing...</code>, <code class="text-cyan-300 font-mono">recording...</code>, or online presence to anyone.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- Bottom Status Legend inside Springboard -->
         <div class="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400">
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>All 16 Default Variables: <strong class="text-emerald-400 font-mono">true</strong> (<code class="text-slate-300">env.z.env</code> &amp; <code class="text-slate-300">data/config.json</code> synced)</span>
+            <span>Stealth Mode: <strong class="text-emerald-400 font-mono">ACTIVE (Zero Typing/Recording/Online Presence)</strong> &middot; Session ID Sent Once to Owner</span>
           </div>
           <div class="font-mono text-amber-300">
-            Owner-Locked Triggers: <strong>.status</strong> (3 Privacy Buttons) &middot; <strong>.autoreact</strong> (3 Services &rarr; ON/OFF) &middot; <strong>.button</strong> &middot; <strong>.qouted</strong>
+            Owner Triggers: <strong>.char {link} 💞</strong> &middot; <strong>.variable</strong> &middot; <strong>.status</strong> &middot; <strong>.autoreact</strong> &middot; <strong>React Any Emoji on View-Once</strong>
           </div>
         </div>
 
@@ -2915,6 +2970,108 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
     </section>
 
     <!-- ======================================================================= -->
+    <!-- TAB 8C: 💞 CHANNEL AUTO-REACTOR (.char {chanellink} 💞)                 -->
+    <!-- ======================================================================= -->
+    <section id="tab-char" class="tab-content hidden space-y-6">
+      <div class="flex items-center justify-between pb-3 mb-2 border-b border-slate-800/80">
+        <button 
+          type="button" 
+          onclick="switchTab('gallery')" 
+          class="px-4 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/80 text-amber-300 hover:text-white font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow active:scale-95"
+        >
+          <span class="text-sm">←</span>
+          <span>Back to Apps Gallery</span>
+        </button>
+        <span class="text-[11px] font-mono text-rose-300">WhatsApp Command: <strong>.char {chanellink} 💞</strong> (Owner-Locked)</span>
+      </div>
+
+      <div class="p-6 sm:p-7 rounded-3xl bg-gradient-to-r from-rose-950/60 via-pink-950/40 to-slate-900/90 border border-rose-500/30 shadow-2xl space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+          <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold uppercase tracking-wider mb-2">
+              <span>💞</span> WhatsApp Channel Auto-Reactor (.char)
+            </div>
+            <h2 class="text-2xl font-black text-white tracking-tight">Auto-React on Every New Channel Post</h2>
+            <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+              Add any WhatsApp Channel invite link below or type <code class="text-rose-300 font-mono font-bold">.char https://whatsapp.com/channel/XXXX 💞</code> in WhatsApp. The bot automatically follows the channel and reacts with your chosen emoji on every new post published in that channel.
+            </p>
+          </div>
+          <button
+            type="button"
+            onclick="fetchCharRules()"
+            class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer self-start md:self-auto"
+          >
+            🔄 Refresh Channels
+          </button>
+        </div>
+
+        <div id="charToastBanner" class="hidden p-3.5 rounded-2xl text-xs font-bold transition-all"></div>
+
+        <!-- Add Channel Rule Form -->
+        <form onsubmit="addCharRuleUI(event)" class="p-5 rounded-2xl bg-slate-950/85 border border-rose-500/30 space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            <div class="md:col-span-7">
+              <label class="block text-[11px] font-mono text-rose-300 uppercase font-bold mb-1.5">
+                WhatsApp Channel Link or @newsletter JID
+              </label>
+              <input
+                type="text"
+                id="charChannelLinkInput"
+                required
+                placeholder="https://whatsapp.com/channel/0029Va... or 120363...@newsletter"
+                class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono text-white placeholder-slate-500 outline-none focus:border-rose-400 transition"
+              />
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-[11px] font-mono text-amber-300 uppercase font-bold mb-1.5">
+                React Emoji
+              </label>
+              <input
+                type="text"
+                id="charEmojiInput"
+                value="💞"
+                required
+                class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-base text-center text-white outline-none focus:border-rose-400 transition"
+              />
+            </div>
+            <div class="md:col-span-3">
+              <button
+                type="submit"
+                class="w-full py-3 px-5 rounded-xl bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 hover:from-rose-400 hover:to-amber-400 text-slate-950 font-black text-xs shadow-lg shadow-rose-500/20 transition cursor-pointer"
+              >
+                💞 Activate .char Rule
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Emoji Presets -->
+          <div class="flex items-center gap-2 flex-wrap pt-1">
+            <span class="text-[11px] font-mono text-slate-400">Quick Emoji Presets:</span>
+            <button type="button" onclick="selectCharEmojiPreset('💞')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">💞</button>
+            <button type="button" onclick="selectCharEmojiPreset('❤️')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">❤️</button>
+            <button type="button" onclick="selectCharEmojiPreset('🔥')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">🔥</button>
+            <button type="button" onclick="selectCharEmojiPreset('👍')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">👍</button>
+            <button type="button" onclick="selectCharEmojiPreset('👑')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">👑</button>
+            <button type="button" onclick="selectCharEmojiPreset('⚡')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">⚡</button>
+            <button type="button" onclick="selectCharEmojiPreset('😍')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">😍</button>
+            <button type="button" onclick="selectCharEmojiPreset('🎉')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">🎉</button>
+          </div>
+        </form>
+
+        <!-- Active Channel Rules List -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-black text-white uppercase tracking-wider">Tracked WhatsApp Channels</h3>
+            <span id="charRulesCountBadge" class="px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 font-mono text-[11px] font-bold">0 Active</span>
+          </div>
+          <div id="charRulesListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Populated dynamically by fetchCharRules() -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================= -->
     <!-- TAB 9: LIVE SYSTEM LOGS                                                 -->
     <!-- ======================================================================= -->
     <section id="tab-logs" class="tab-content hidden space-y-4">
@@ -2970,7 +3127,7 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
               <h2 class="text-lg sm:text-xl font-black text-white tracking-tight">View-Once Downloader &amp; Deleted Message Fetcher</h2>
             </div>
             <p class="text-xs text-slate-400 max-w-2xl">
-              Real-time Baileys interceptor that automatically unlocks disappearing View-Once media (photos, videos, voice notes) and recovers "Delete for Everyone" messages across private and group chats.
+              Real-time Baileys interceptor that unlocks disappearing View-Once media (photos, videos, voice notes) and recovers "Delete for Everyone" messages. <strong>Tip:</strong> React with <strong>any emoji</strong> (e.g. ❤️, 🔥, 💞, 👍, 😍) on any View-Once file in WhatsApp to immediately open &amp; forward it to your Owner DM!
             </p>
           </div>
 
@@ -5035,6 +5192,12 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
         badge: '3 Services • ON/OFF',
         desc: 'Interactive Auto-React on Status, Clients Msg, or Every Msg (even Owner Msgs) with ON/OFF controls'
       },
+      char: {
+        title: 'Channel Auto-Reactor (.char)',
+        icon: '💞',
+        badge: '.char {link} 💞',
+        desc: 'Automatically react with custom emoji on every new post of any WhatsApp Channel link'
+      },
       appdeploy: {
         title: 'AI Website & App Builder • AppDeploy.ai',
         icon: '🚀',
@@ -5141,6 +5304,7 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
         fetchStatusPrivacyConfig();
       }
       if (tabId === 'autoreact') fetchAutoReactConfig();
+      if (tabId === 'char') fetchCharRules();
       if (tabId === 'simdb') fetchSimDbStatus();
       if (tabId === 'appdeploy') fetchAppDeployStudioStatus();
     }
@@ -7445,6 +7609,18 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
         action: () => switchTab('autoreact')
       },
       {
+        id: 'char',
+        name: 'Channel React',
+        sub: '.char Link 💞',
+        icon: '💞',
+        image: '',
+        badge: '.char',
+        badgeColor: 'bg-rose-300 text-slate-950',
+        gradient: 'from-rose-500 via-pink-600 to-purple-700',
+        category: 'messaging',
+        action: () => switchTab('char')
+      },
+      {
         id: 'optional',
         name: 'Variables',
         sub: 'All Vars & .variable',
@@ -9652,6 +9828,175 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
           btn.disabled = false;
           btn.textContent = '🧪 Run 10 Integration Self-Tests';
         }
+      }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 💞 CHANNEL AUTO-REACTOR (.char {chanellink} 💞) UI CONTROLLER
+    // ──────────────────────────────────────────────────────────────────────────
+    let charRulesCache = [];
+
+    function showCharToast(msg, isError = false) {
+      const box = document.getElementById('charToastBanner');
+      if (!box) return;
+      box.textContent = (isError ? '❌ ' : '✅ ') + msg;
+      box.className = isError
+        ? 'p-3.5 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-xs text-rose-200 font-bold'
+        : 'p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-xs text-emerald-200 font-bold';
+      box.classList.remove('hidden');
+      setTimeout(() => box.classList.add('hidden'), 5000);
+    }
+
+    function selectCharEmojiPreset(emoji) {
+      const input = document.getElementById('charEmojiInput');
+      if (input && emoji) input.value = emoji;
+    }
+
+    function renderCharRulesList(rules) {
+      charRulesCache = Array.isArray(rules) ? rules : [];
+      const countBadge = document.getElementById('charRulesCountBadge');
+      if (countBadge) {
+        const activeCount = charRulesCache.filter(r => r.enabled !== false).length;
+        countBadge.textContent = `${activeCount} Active / ${charRulesCache.length} Total`;
+      }
+
+      const container = document.getElementById('charRulesListContainer');
+      if (!container) return;
+
+      if (charRulesCache.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full p-6 rounded-2xl bg-slate-950/80 border border-slate-800 text-center space-y-2">
+            <div class="text-2xl">💞</div>
+            <div class="text-xs font-bold text-white">No WhatsApp Channels Configured Yet</div>
+            <div class="text-[11px] text-slate-400">
+              Add a channel link above or send <code class="text-rose-300 font-mono">.char https://whatsapp.com/channel/XXXX 💞</code> in WhatsApp to auto-react on every new post.
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = charRulesCache.map(rule => {
+        const isEnabled = rule.enabled !== false;
+        return `
+          <div class="p-4 rounded-2xl bg-slate-950/90 border ${isEnabled ? 'border-rose-500/40' : 'border-slate-800'} flex flex-col justify-between gap-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-lg">${escapeHtml(rule.emoji || '💞')}</span>
+                  <span class="text-sm font-black text-white truncate">${escapeHtml(rule.channelName || 'WhatsApp Channel')}</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${isEnabled ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-400'}">
+                    ${isEnabled ? 'ACTIVE' : 'PAUSED'}
+                  </span>
+                </div>
+                <div class="text-[11px] font-mono text-rose-300 truncate mt-1">${escapeHtml(rule.channelLink || '')}</div>
+                ${rule.channelJid ? `<div class="text-[10px] font-mono text-slate-500 mt-0.5">JID: ${escapeHtml(rule.channelJid)}</div>` : ''}
+              </div>
+              <div class="text-right shrink-0">
+                <div class="text-xs font-mono font-bold text-amber-300">${Number(rule.reactedCount || 0)}</div>
+                <div class="text-[9px] font-mono text-slate-500 uppercase">Posts Reacted</div>
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  onclick="toggleCharRuleUI('${escapeHtml(rule.id)}', true)"
+                  class="px-3 py-1.5 rounded-xl text-[11px] font-bold transition cursor-pointer ${isEnabled ? 'bg-emerald-500 text-slate-950 shadow' : 'bg-slate-900 border border-slate-700 text-slate-300 hover:text-white'}"
+                >
+                  ✅ ON
+                </button>
+                <button
+                  type="button"
+                  onclick="toggleCharRuleUI('${escapeHtml(rule.id)}', false)"
+                  class="px-3 py-1.5 rounded-xl text-[11px] font-bold transition cursor-pointer ${!isEnabled ? 'bg-rose-500 text-white shadow' : 'bg-slate-900 border border-slate-700 text-slate-300 hover:text-white'}"
+                >
+                  ❌ OFF
+                </button>
+              </div>
+              <button
+                type="button"
+                onclick="deleteCharRuleUI('${escapeHtml(rule.id)}')"
+                class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-rose-500/20 border border-slate-800 hover:border-rose-500/40 text-slate-400 hover:text-rose-300 text-[11px] font-bold transition cursor-pointer"
+              >
+                🗑️ Remove
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function fetchCharRules() {
+      try {
+        const res = await fetch('/api/char/rules');
+        const data = await res.json();
+        if (data.success) {
+          renderCharRulesList(data.rules || []);
+        }
+      } catch (_) {}
+    }
+
+    async function addCharRuleUI(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const linkInput = document.getElementById('charChannelLinkInput');
+      const emojiInput = document.getElementById('charEmojiInput');
+      const channelLink = String(linkInput?.value || '').trim();
+      const emoji = String(emojiInput?.value || '💞').trim() || '💞';
+      if (!channelLink) return;
+
+      try {
+        const res = await fetch('/api/char/rules', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ channelLink, emoji })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          if (linkInput) linkInput.value = '';
+          renderCharRulesList(data.rules || []);
+          showCharToast(data.message || 'Channel Auto-React rule activated!');
+        } else {
+          showCharToast(data.error || 'Failed to add channel rule', true);
+        }
+      } catch (err) {
+        showCharToast(err.message, true);
+      }
+    }
+
+    async function toggleCharRuleUI(id, enabled) {
+      try {
+        const res = await fetch(`/api/char/rules/${encodeURIComponent(id)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          renderCharRulesList(data.rules || []);
+          showCharToast(data.message || 'Updated channel rule!');
+        } else {
+          showCharToast(data.error || 'Could not update channel rule', true);
+        }
+      } catch (err) {
+        showCharToast(err.message, true);
+      }
+    }
+
+    async function deleteCharRuleUI(id) {
+      try {
+        const res = await fetch(`/api/char/rules/${encodeURIComponent(id)}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          renderCharRulesList(data.rules || []);
+          showCharToast('Removed channel auto-react rule.');
+        } else {
+          showCharToast(data.error || 'Could not delete rule', true);
+        }
+      } catch (err) {
+        showCharToast(err.message, true);
       }
     }
   </script>

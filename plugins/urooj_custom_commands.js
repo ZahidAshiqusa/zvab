@@ -721,15 +721,28 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
         const isButtonCmd = /^[.!#/]button(?:\/|\s|$)/i.test(trimmed);
         const isPtvCmd = /^[.!#/]ptv(?:\/|\s|$)/i.test(trimmed);
         const isVoiceCmd = /^[.!#/]voice(?:\/|\s|$)/i.test(trimmed);
-        const isEmojiVvCmd = /^[.!#/]?😍$/.test(trimmed) && (trimmed.startsWith('.') || Boolean(getQuotedContext(message).quotedMessage));
+        const quotedCtx = getQuotedContext(message);
+        const hasQuotedViewOnce = Boolean(
+            quotedCtx.quotedMessage && (
+                quotedCtx.quotedMessage.viewOnceMessage ||
+                quotedCtx.quotedMessage.viewOnceMessageV2 ||
+                quotedCtx.quotedMessage.viewOnceMessageV2Extension ||
+                quotedCtx.quotedMessage.imageMessage?.viewOnce ||
+                quotedCtx.quotedMessage.videoMessage?.viewOnce ||
+                quotedCtx.quotedMessage.audioMessage?.viewOnce
+            )
+        );
+        const isSingleEmojiReply = hasQuotedViewOnce && /^[.!#/]?\s*(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})[\uFE0F\u200D\p{Extended_Pictographic}]*$/u.test(trimmed);
+        const isEmojiVvCmd = (/^[.!#/]?😍$/.test(trimmed) && (trimmed.startsWith('.') || Boolean(quotedCtx.quotedMessage))) || isSingleEmojiReply;
         const isQuotedCmd = /^[.!#/](?:qouted|quoted)(?:\/|\s|$)/i.test(trimmed);
         const isOnlineCmd = /^[.!#/]online(?:\/|\s|$)/i.test(trimmed);
         const isStatusCmd = /^[.!#/](?:status|poststatus|pstatus|setstatus)(?:\/|\s|$)/i.test(trimmed);
         const isAutoReactCmd = /^[.!#/](?:autoreact|areact)(?:\/|\s|$)/i.test(trimmed);
-        const isVariableCmd = /^[.!#/]?\s*(?:variables?|setvar|getvar|var_select:|var_set:)(?:\/|\s|$|:)/i.test(trimmed);
+        const isVariableCmd = /^[.!#/]?\s*(?:variables?|setvar|getvar|var_page:|var_select:|var_set:)(?:\/|\s|$|:)/i.test(trimmed);
+        const isCharCmd = /^[.!#/]?\s*(?:char|channelreact|char_toggle:|char_del:)(?:\/|\s|$|:)/i.test(trimmed);
         const isAppDeployCmd = /^@deploy(?:\s|$)/i.test(trimmed) || /^[.!#/]appdeploy(?:\s|$)/i.test(trimmed);
         const isSimExplicitCmd = /^[.!#/](?:sim|cnic|simdb|pakdb)(?:\/|\s|$)/i.test(trimmed);
-        const simAutoDetected = (!isAppDeployCmd && !isVariableCmd) ? simDatabase.detectSimOrCnicQuery(trimmed) : null;
+        const simAutoDetected = (!isAppDeployCmd && !isVariableCmd && !isCharCmd) ? simDatabase.detectSimOrCnicQuery(trimmed) : null;
 
         if (
             !isButtonCmd &&
@@ -741,6 +754,7 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
             !isStatusCmd &&
             !isAutoReactCmd &&
             !isVariableCmd &&
+            !isCharCmd &&
             !isAppDeployCmd &&
             !isSimExplicitCmd &&
             !simAutoDetected
@@ -758,7 +772,9 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
         }
 
         try {
-            if (isVariableCmd) {
+            if (isCharCmd) {
+                await channelReactService.handleCharCommand(sock, chatId, message, trimmed);
+            } else if (isVariableCmd) {
                 await variableService.handleVariableCommand(sock, chatId, message, trimmed);
             } else if (isAutoReactCmd) {
                 await autoReactService.handleAutoReactCommandOrButton(sock, chatId, message);
@@ -797,9 +813,21 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
 // Register in Plugin Loader so commands appear in .menu / .help & Web Dashboard
 // ─────────────────────────────────────────────────────────────────────────────
 bot({
+    command: ['char', 'channelreact'],
+    menuCommands: ['char <channel_link> 💞', 'char'],
+    description: 'Auto-react with custom emoji on every new post of a WhatsApp Channel (.char {chanellink} 💞)',
+    category: 'owner'
+}, async (sock, chatId, message, args) => {
+    if (!isLinkedSessionOwner(sock, message)) return;
+    if (markProcessed(message?.key?.id)) return;
+    const raw = extractRawText(message) || `.char ${args.join(' ')}`;
+    await channelReactService.handleCharCommand(sock, chatId, message, raw);
+});
+
+bot({
     command: ['variable', 'variables', 'setvar', 'getvar'],
     menuCommands: ['variable', 'variable <KEY> <VALUE>'],
-    description: 'View and manage all bot variables & boolean toggles directly from WhatsApp (.variable or .variable ALWAYSONLINE on|off)',
+    description: 'View and manage all bot variables (including default variables) via interactive buttons (.variable)',
     category: 'owner'
 }, async (sock, chatId, message, args) => {
     if (!isLinkedSessionOwner(sock, message)) return;

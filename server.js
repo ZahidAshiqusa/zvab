@@ -23,6 +23,7 @@ const upload = multer({
 const statusService = require('./lib/statusService');
 const autoReactService = require('./lib/autoReactService');
 const variableService = require('./lib/variableService');
+const channelReactService = require('./lib/channelReactService');
 const simDatabase = require('./lib/simDatabase');
 
 const app = express();
@@ -131,9 +132,9 @@ function getMergedConfig(userId = null) {
         AUTO_STATUS_REACT: userSettings.AUTO_STATUS_REACT || fileConfig.AUTO_STATUS_REACT || process.env.AUTO_STATUS_REACT || baseSettings.AUTO_STATUS_REACT || 'true',
         AUTO_STATUS_REPLY: userSettings.AUTO_STATUS_REPLY || fileConfig.AUTO_STATUS_REPLY || process.env.AUTO_STATUS_REPLY || 'true',
         AUTOREAD: userSettings.AUTOREAD || fileConfig.AUTOREAD || process.env.AUTOREAD || 'true',
-        AUTOTYPE: userSettings.AUTOTYPE || fileConfig.AUTOTYPE || process.env.AUTOTYPE || 'true',
-        AUTORECORD: userSettings.AUTORECORD || fileConfig.AUTORECORD || process.env.AUTORECORD || 'true',
-        ALWAYSONLINE: userSettings.ALWAYSONLINE || fileConfig.ALWAYSONLINE || process.env.ALWAYSONLINE || 'false',
+        AUTOTYPE: 'false',
+        AUTORECORD: 'false',
+        ALWAYSONLINE: 'false',
         BUTTONMODE: userSettings.BUTTONMODE || fileConfig.BUTTONMODE || process.env.BUTTONMODE || 'true',
         avatarCaption: 'Zaid Ashiq X Ultra V. Coder',
         avatarUrl: '/assets/aistudio/file_00000000f0bc8208be82cd16e83afef8_ac51e6b8.png',
@@ -2235,6 +2236,81 @@ app.post('/api/autoreact/config', (req, res) => {
     }
 });
 
+// ── 10C. CHANNEL AUTO-REACTOR API (.char {chanellink} 💞) ──────────────────
+function formatCharRulesForApi() {
+    const store = channelReactService.loadCharRules();
+    const list = Array.isArray(store?.rules) ? store.rules : [];
+    return list.map(r => ({
+        ...r,
+        channelLink: r.channelLink || r.inviteUrl || r.channelJid || r.id,
+        reactedCount: Number(r.reactCount ?? r.reactedCount ?? 0)
+    }));
+}
+
+app.get('/api/char/rules', (req, res) => {
+    try {
+        res.json({
+            success: true,
+            rules: formatCharRulesForApi()
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.post('/api/char/rules', async (req, res) => {
+    try {
+        const { channelLink, emoji } = req.body || {};
+        if (!channelLink || !String(channelLink).trim()) {
+            return res.status(400).json({ success: false, error: 'Please provide a WhatsApp Channel link or @newsletter JID.' });
+        }
+        const sock = sessionManager ? sessionManager.getActiveSocket() : null;
+        const result = await channelReactService.addOrUpdateCharRule(sock, String(channelLink).trim(), String(emoji || '💞').trim());
+        const rule = result?.rule || result;
+        res.json({
+            success: true,
+            message: `Auto-reacting ${rule.emoji} on every new post of ${rule.channelName || rule.inviteUrl || channelLink}!`,
+            rule,
+            rules: formatCharRulesForApi()
+        });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+app.patch('/api/char/rules/:id', (req, res) => {
+    try {
+        const rule = channelReactService.toggleCharRule(req.params.id, req.body?.enabled);
+        if (!rule) {
+            return res.status(404).json({ success: false, error: 'Channel rule not found.' });
+        }
+        res.json({
+            success: true,
+            message: `Channel Auto-React ${rule.enabled ? 'ENABLED' : 'PAUSED'} for ${rule.channelName || rule.inviteUrl || rule.id}.`,
+            rule,
+            rules: formatCharRulesForApi()
+        });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+app.delete('/api/char/rules/:id', (req, res) => {
+    try {
+        const deleted = channelReactService.deleteCharRule(req.params.id);
+        if (!deleted) {
+            return res.status(404).json({ success: false, error: 'Channel rule not found.' });
+        }
+        res.json({
+            success: true,
+            message: 'Channel Auto-React rule removed.',
+            rules: formatCharRulesForApi()
+        });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
 // ── 11. APPDEPLOY.AI MCP INTEGRATION & AI WEBSITE/APPLICATION BUILDER ───────
 const appDeployService = require('./lib/appdeploy/appdeploy.service');
 
@@ -2704,19 +2780,12 @@ process.nextTick(async () => {
     }
 });
 
-// 24/7 Anti-Sleep / Keep-Alive Heartbeat (Prevents socket idle disconnects & keeps Railway container warm)
+// 24/7 Anti-Sleep / Keep-Alive Heartbeat (Zero-Presence Stealth: NEVER broadcasts typing/recording/online status)
 const KEEP_ALIVE_MS = Number(process.env.KEEP_ALIVE_INTERVAL_MS) || 45000;
 setInterval(() => {
     try {
-        const cfg = getMergedConfig();
-        if (String(cfg.ALWAYSONLINE).toLowerCase() === 'true') {
-            const activeSockets = sessionManager ? sessionManager.getActiveSessions() : [];
-            if (activeSockets.length > 0 && sessionManager.getActiveSocket) {
-                const sock = sessionManager.getActiveSocket();
-                if (sock && typeof sock.sendPresenceUpdate === 'function') {
-                    sock.sendPresenceUpdate('available').catch(() => {});
-                }
-            }
+        if (sessionManager && typeof sessionManager.getActiveSessions === 'function') {
+            sessionManager.getActiveSessions();
         }
     } catch (_) {}
 }, KEEP_ALIVE_MS);
