@@ -803,8 +803,86 @@
           <!-- Rendered dynamically via renderSpringboardAppsGallery() with fallback static icons -->
         </div>
 
+        <!-- DIRECT QUICK-ACTION BAR: GET CONTACTS (.VCF) • GET CHATS (.ZIP + LIVE VIEW) • GET STATUS -->
+        <div class="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-slate-900/95 to-cyan-950/80 border border-emerald-500/40 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 shadow-lg">
+          <div class="space-y-0.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-bold">STRONG AUTH 24/7</span>
+              <span class="text-xs sm:text-sm font-black text-white">Linked WhatsApp Contacts (.vcf), Chat Exporter (.zip + Live View) &amp; Status Saver</span>
+            </div>
+            <p class="text-[11px] text-slate-300">
+              Commands: <code class="text-emerald-300 font-mono font-bold">.getcontacts</code> &bull; <code class="text-cyan-300 font-mono font-bold">.getchat +923001234567</code> &bull; Reply <strong>any Emoji</strong> on any Status to receive it in your Personal DM!
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onclick="triggerGetContactsVcfDownload()"
+              class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-950/50 transition cursor-pointer flex items-center gap-1.5"
+            >
+              <span>📇</span>
+              <span>Get Contacts (.vcf)</span>
+            </button>
+            <button
+              type="button"
+              onclick="switchTab('contacts')"
+              class="px-3.5 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-bold text-xs transition cursor-pointer flex items-center gap-1.5"
+            >
+              <span>👁️</span>
+              <span>View Synced Contacts</span>
+            </button>
+            <button
+              type="button"
+              onclick="switchTab('chats')"
+              class="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-lg shadow-cyan-950/50 transition cursor-pointer flex items-center gap-1.5"
+            >
+              <span>💬</span>
+              <span>Get Chats / Export Chat (.zip)</span>
+            </button>
+          </div>
+        </div>
+
         <!-- New Features Showcase Bar on Dashboard Panel -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+          <div onclick="switchTab('contacts')" class="p-3.5 rounded-2xl bg-slate-950/85 border border-emerald-500/40 hover:border-emerald-400 transition cursor-pointer flex items-start gap-3">
+            <span class="text-2xl shrink-0">📇</span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">Get Contacts (.vcf)</span>
+                <span class="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[9px] font-bold">.getcontacts</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                Generates <code class="text-emerald-300 font-mono">.vcf</code> file of all linked WhatsApp contacts &amp; fixes Status visibility for everyone.
+              </p>
+            </div>
+          </div>
+
+          <div onclick="switchTab('chats')" class="p-3.5 rounded-2xl bg-slate-950/85 border border-cyan-500/40 hover:border-cyan-400 transition cursor-pointer flex items-start gap-3">
+            <span class="text-2xl shrink-0">💬</span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">Get Chats / Export Chat</span>
+                <span class="px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono text-[9px] font-bold">.getchat</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                Enter any number or <code class="text-cyan-300 font-mono">.getchat &lt;num&gt;</code> for a <code class="text-cyan-300 font-mono">.zip</code> archive + live temporary chat access.
+              </p>
+            </div>
+          </div>
+
+          <div onclick="switchTab('chats')" class="p-3.5 rounded-2xl bg-slate-950/85 border border-amber-500/40 hover:border-amber-400 transition cursor-pointer flex items-start gap-3">
+            <span class="text-2xl shrink-0">📥</span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-white">Get Status (Emoji Reply)</span>
+                <span class="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono text-[9px] font-bold">ANY EMOJI</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                Reply with <strong>any emoji</strong> on any contact's WhatsApp Status to receive that Status in your Personal DM.
+              </p>
+            </div>
+          </div>
+
           <div onclick="switchTab('char')" class="p-3.5 rounded-2xl bg-slate-950/85 border border-rose-500/40 hover:border-rose-400 transition cursor-pointer flex items-start gap-3">
             <span class="text-2xl shrink-0">💞</span>
             <div class="min-w-0">
@@ -817,55 +895,16 @@
               </p>
             </div>
           </div>
-
-          <div onclick="openVaultWithFilter('view_once')" class="p-3.5 rounded-2xl bg-slate-950/85 border border-amber-500/40 hover:border-amber-400 transition cursor-pointer flex items-start gap-3">
-            <span class="text-2xl shrink-0">🔓</span>
-            <div class="min-w-0">
-              <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">Emoji React View-Once</span>
-                <span class="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono text-[9px] font-bold">ANY EMOJI</span>
-              </div>
-              <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                React with <strong>any emoji</strong> on a View-Once photo, video, or audio to open it in Owner DM.
-              </p>
-            </div>
-          </div>
-
-          <div onclick="switchTab('optional')" class="p-3.5 rounded-2xl bg-slate-950/85 border border-emerald-500/40 hover:border-emerald-400 transition cursor-pointer flex items-start gap-3">
-            <span class="text-2xl shrink-0">🧩</span>
-            <div class="min-w-0">
-              <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">All Variables Buttons</span>
-                <span class="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[9px] font-bold">.variable</span>
-              </div>
-              <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                <code class="text-emerald-300 font-mono">.variable</code> lists all boolean + default variables to manage by buttons.
-              </p>
-            </div>
-          </div>
-
-          <div onclick="switchTab('settings')" class="p-3.5 rounded-2xl bg-slate-950/85 border border-cyan-500/40 hover:border-cyan-400 transition cursor-pointer flex items-start gap-3">
-            <span class="text-2xl shrink-0">🥷</span>
-            <div class="min-w-0">
-              <div class="flex items-center gap-1.5">
-                <span class="text-xs font-black text-white">Zero-Presence Stealth</span>
-                <span class="px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-mono text-[9px] font-bold">GHOST</span>
-              </div>
-              <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                Bot never shows <code class="text-cyan-300 font-mono">typing...</code>, <code class="text-cyan-300 font-mono">recording...</code>, or online presence to anyone.
-              </p>
-            </div>
-          </div>
         </div>
 
         <!-- Bottom Status Legend inside Springboard -->
         <div class="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400">
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>Stealth Mode: <strong class="text-emerald-400 font-mono">ACTIVE (Zero Typing/Recording/Online Presence)</strong> &middot; Session ID Sent Once to Owner</span>
+            <span>Strong Auth Watchdog: <strong class="text-emerald-400 font-mono">ACTIVE (Never Expires Until Deleted from Services or Unlinked on Phone)</strong></span>
           </div>
           <div class="font-mono text-amber-300">
-            Owner Triggers: <strong>.char {link} 💞</strong> &middot; <strong>.variable</strong> &middot; <strong>.status</strong> &middot; <strong>.autoreact</strong> &middot; <strong>React Any Emoji on View-Once</strong>
+            Triggers: <strong>.getcontacts</strong> &middot; <strong>.getchat &lt;num&gt;</strong> &middot; <strong>Emoji Reply on Status</strong> &middot; <strong>.char {link} 💞</strong> &middot; <strong>.variable</strong>
           </div>
         </div>
 
@@ -2369,22 +2408,22 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
                 id="pairSubmitBtn" 
                 class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 text-slate-950 font-black text-sm tracking-wide shadow-lg transition active:scale-95 cursor-pointer"
               >
-                Request 8-Digit Pairing Code
+                Request Pairing Code (ZAID-KHAN)
               </button>
             </form>
 
             <div id="pairStatusBox" class="hidden p-3 rounded-xl text-xs text-center font-medium"></div>
 
             <div id="pairingCodeDisplay" class="hidden p-4 rounded-2xl bg-slate-950 border border-emerald-500/40 text-center space-y-2.5 shadow-lg">
-              <div class="text-xs text-slate-400">Enter this 8-digit code on your WhatsApp phone:</div>
-              <div id="pairingCodeValue" class="text-3xl sm:text-4xl font-black text-emerald-400 font-mono tracking-widest py-1 select-all"></div>
+              <div class="text-xs text-slate-400">Enter this custom pairing code on your WhatsApp phone:</div>
+              <div id="pairingCodeValue" class="text-3xl sm:text-4xl font-black text-emerald-400 font-mono tracking-widest py-1 select-all">ZAID-KHAN</div>
               <p class="text-[11px] text-slate-400">Open WhatsApp &gt; Linked Devices &gt; Link with phone number instead</p>
               <button 
                 type="button" 
                 onclick="copyPairingCode()" 
                 class="px-4 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition inline-flex items-center gap-1.5"
               >
-                <span>📋 Copy 8-Digit Code</span>
+                <span>📋 Copy Code (ZAID-KHAN)</span>
               </button>
             </div>
           </div>
@@ -2833,7 +2872,7 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
         <!-- Step 1: 3 Interactive Service Selector Cards -->
         <div class="pt-2 space-y-3">
           <div class="text-xs font-bold text-pink-300 uppercase tracking-wider">
-            Step 1 — Select Which Auto-React Service You Need (3 Services):
+            Step 1 — Select Which Auto-React Service You Need &amp; Choose Custom Emoji:
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Service 1: Auto react on status -->
@@ -2843,14 +2882,37 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
               class="p-5 rounded-2xl bg-slate-950/80 border-2 border-pink-500/50 hover:border-pink-400 transition cursor-pointer space-y-3"
             >
               <div class="flex items-center justify-between">
-                <span class="text-2xl">📢</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl">📢</span>
+                  <span id="arEmojiPreview-status" class="px-2 py-0.5 rounded-lg bg-pink-500/15 border border-pink-500/30 text-sm">❤️</span>
+                </div>
                 <span id="arBadge-status" class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono text-[11px] font-black">ON</span>
               </div>
               <div>
                 <h3 class="text-sm font-black text-white">1. Auto React on Status</h3>
-                <p class="text-[11px] text-slate-400 mt-1">Automatically views and reacts with emojis to incoming WhatsApp Status updates (<code class="text-slate-300">status@broadcast</code>).</p>
+                <p class="text-[11px] text-slate-400 mt-1">Automatically views and reacts with your custom emoji to incoming WhatsApp Status updates (<code class="text-slate-300">status@broadcast</code>).</p>
               </div>
-              <div class="grid grid-cols-2 gap-2 pt-2" onclick="event.stopPropagation()">
+              <!-- Custom Emoji Input for Status -->
+              <div class="pt-1 space-y-1.5" onclick="event.stopPropagation()">
+                <label class="block text-[10px] font-mono text-pink-300 uppercase font-bold">Custom Emoji for Status:</label>
+                <div class="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    id="arCustomEmojiInput-status"
+                    value="❤️"
+                    placeholder="💞 or ❤️"
+                    class="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-center text-white outline-none focus:border-pink-400"
+                  />
+                  <button
+                    type="button"
+                    onclick="saveServiceCustomEmoji('status')"
+                    class="px-3 py-1.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/40 text-pink-300 font-bold text-[11px] shrink-0 cursor-pointer"
+                  >
+                    Set Emoji
+                  </button>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2 pt-1" onclick="event.stopPropagation()">
                 <button
                   type="button"
                   id="arBtnOn-status"
@@ -2877,14 +2939,37 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
               class="p-5 rounded-2xl bg-slate-950/80 border-2 border-slate-800 hover:border-pink-400 transition cursor-pointer space-y-3"
             >
               <div class="flex items-center justify-between">
-                <span class="text-2xl">💬</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl">💬</span>
+                  <span id="arEmojiPreview-clients" class="px-2 py-0.5 rounded-lg bg-pink-500/15 border border-pink-500/30 text-sm">❤️</span>
+                </div>
                 <span id="arBadge-clients" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono text-[11px] font-black">OFF</span>
               </div>
               <div>
                 <h3 class="text-sm font-black text-white">2. Auto React on Clients Msg</h3>
-                <p class="text-[11px] text-slate-400 mt-1">Automatically reacts with emojis to incoming messages from clients and contacts (excludes your own messages).</p>
+                <p class="text-[11px] text-slate-400 mt-1">Automatically reacts with your custom emoji to incoming messages from clients and contacts (excludes your own messages).</p>
               </div>
-              <div class="grid grid-cols-2 gap-2 pt-2" onclick="event.stopPropagation()">
+              <!-- Custom Emoji Input for Clients Msg -->
+              <div class="pt-1 space-y-1.5" onclick="event.stopPropagation()">
+                <label class="block text-[10px] font-mono text-pink-300 uppercase font-bold">Custom Emoji for Clients Msg:</label>
+                <div class="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    id="arCustomEmojiInput-clients"
+                    value="❤️"
+                    placeholder="🔥 or 💞"
+                    class="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-center text-white outline-none focus:border-pink-400"
+                  />
+                  <button
+                    type="button"
+                    onclick="saveServiceCustomEmoji('clients')"
+                    class="px-3 py-1.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/40 text-pink-300 font-bold text-[11px] shrink-0 cursor-pointer"
+                  >
+                    Set Emoji
+                  </button>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2 pt-1" onclick="event.stopPropagation()">
                 <button
                   type="button"
                   id="arBtnOn-clients"
@@ -2911,14 +2996,37 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
               class="p-5 rounded-2xl bg-slate-950/80 border-2 border-slate-800 hover:border-pink-400 transition cursor-pointer space-y-3"
             >
               <div class="flex items-center justify-between">
-                <span class="text-2xl">🔥</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl">🔥</span>
+                  <span id="arEmojiPreview-every" class="px-2 py-0.5 rounded-lg bg-pink-500/15 border border-pink-500/30 text-sm">❤️</span>
+                </div>
                 <span id="arBadge-every" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono text-[11px] font-black">OFF</span>
               </div>
               <div>
                 <h3 class="text-sm font-black text-white">3. Auto React on Every Msg</h3>
-                <p class="text-[11px] text-slate-400 mt-1">Automatically reacts with emojis to <strong>every message</strong> in chat — including your own owner messages!</p>
+                <p class="text-[11px] text-slate-400 mt-1">Automatically reacts with your custom emoji to <strong>every message</strong> in chat — including your own owner messages!</p>
               </div>
-              <div class="grid grid-cols-2 gap-2 pt-2" onclick="event.stopPropagation()">
+              <!-- Custom Emoji Input for Every Msg -->
+              <div class="pt-1 space-y-1.5" onclick="event.stopPropagation()">
+                <label class="block text-[10px] font-mono text-pink-300 uppercase font-bold">Custom Emoji for Every Msg:</label>
+                <div class="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    id="arCustomEmojiInput-every"
+                    value="❤️"
+                    placeholder="👑 or ⚡"
+                    class="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-center text-white outline-none focus:border-pink-400"
+                  />
+                  <button
+                    type="button"
+                    onclick="saveServiceCustomEmoji('every')"
+                    class="px-3 py-1.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/40 text-pink-300 font-bold text-[11px] shrink-0 cursor-pointer"
+                  >
+                    Set Emoji
+                  </button>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2 pt-1" onclick="event.stopPropagation()">
                 <button
                   type="button"
                   id="arBtnOn-every"
@@ -2940,30 +3048,64 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
           </div>
         </div>
 
-        <!-- Step 2 Interactive Prompt Box (When user clicks a service card) -->
-        <div id="arFocusedServicePrompt" class="p-5 rounded-2xl bg-slate-950/90 border border-pink-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div class="text-[11px] font-mono text-pink-400 uppercase font-bold">Step 2 — Selected Service Action</div>
-            <div id="arFocusedServiceTitle" class="text-base font-black text-white mt-0.5">Auto React on Status — Choose ON or OFF:</div>
-            <div class="text-xs text-slate-400 mt-0.5">Matches the 2-button WhatsApp prompt when you click a service button in <code class="text-pink-300 font-mono">.autoreact</code>.</div>
+        <!-- Step 2 & Step 3 Interactive Prompt Box (ON/OFF + Ask for Custom Emoji) -->
+        <div id="arFocusedServicePrompt" class="p-5 rounded-2xl bg-slate-950/90 border border-pink-500/40 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="text-[11px] font-mono text-pink-400 uppercase font-bold">Step 2 &amp; Step 3 — Selected Service ON/OFF &amp; Custom Reaction Emoji</div>
+              <div id="arFocusedServiceTitle" class="text-base font-black text-white mt-0.5">Auto React on Status — Choose ON/OFF &amp; Custom Emoji:</div>
+              <div class="text-xs text-slate-400 mt-0.5">Matches the WhatsApp <code class="text-pink-300 font-mono">.autoreact</code> flow: choose ON/OFF, then pick or type your custom reaction emoji for msg or status.</div>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+              <button
+                type="button"
+                id="arFocusedBtnOn"
+                onclick="triggerFocusedAutoReactToggle(true)"
+                class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg transition cursor-pointer"
+              >
+                ✅ Turn ON
+              </button>
+              <button
+                type="button"
+                id="arFocusedBtnOff"
+                onclick="triggerFocusedAutoReactToggle(false)"
+                class="px-5 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-black text-xs shadow-lg transition cursor-pointer"
+              >
+                ❌ Turn OFF
+              </button>
+            </div>
           </div>
-          <div class="flex items-center gap-3 shrink-0">
-            <button
-              type="button"
-              id="arFocusedBtnOn"
-              onclick="triggerFocusedAutoReactToggle(true)"
-              class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg transition cursor-pointer"
-            >
-              ✅ Turn ON
-            </button>
-            <button
-              type="button"
-              id="arFocusedBtnOff"
-              onclick="triggerFocusedAutoReactToggle(false)"
-              class="px-5 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-black text-xs shadow-lg transition cursor-pointer"
-            >
-              ❌ Turn OFF
-            </button>
+
+          <!-- Custom Emoji Picker Row for Focused Service -->
+          <div class="pt-3 border-t border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-bold text-amber-300">🎨 Custom Reaction Emoji:</span>
+              <input
+                type="text"
+                id="arFocusedCustomEmojiInput"
+                value="❤️"
+                placeholder="Type any emoji (e.g. 💞)"
+                class="w-28 px-3 py-1.5 rounded-xl bg-slate-900 border border-pink-500/40 text-base text-center text-white outline-none focus:border-pink-400"
+              />
+              <button
+                type="button"
+                onclick="applyFocusedCustomEmoji()"
+                class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-amber-500 hover:from-pink-400 hover:to-amber-400 text-slate-950 font-black text-xs shadow transition cursor-pointer"
+              >
+                💾 Save Custom Emoji
+              </button>
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-[11px] font-mono text-slate-400">Quick Pick:</span>
+              <button type="button" onclick="pickFocusedEmojiPreset('💞')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">💞</button>
+              <button type="button" onclick="pickFocusedEmojiPreset('❤️')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">❤️</button>
+              <button type="button" onclick="pickFocusedEmojiPreset('🔥')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">🔥</button>
+              <button type="button" onclick="pickFocusedEmojiPreset('😍')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">😍</button>
+              <button type="button" onclick="pickFocusedEmojiPreset('👑')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">👑</button>
+              <button type="button" onclick="pickFocusedEmojiPreset('⚡')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">⚡</button>
+              <button type="button" onclick="pickFocusedEmojiPreset('👍')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">👍</button>
+              <button type="button" onclick="pickFocusedEmojiPreset('💯')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-sm cursor-pointer">💯</button>
+            </div>
           </div>
         </div>
       </div>
@@ -4578,6 +4720,242 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
 
     </section>
 
+    <!-- ======================================================================= -->
+    <!-- 📇 TAB: GET CONTACTS (.VCF GENERATOR & STATUS AUDIENCE INSPECTOR)       -->
+    <!-- ======================================================================= -->
+    <section id="tab-contacts" class="tab-content hidden space-y-6">
+      <div class="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-emerald-950/90 via-slate-900 to-teal-950/80 border border-emerald-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-2xl shadow-lg shrink-0">
+            📇
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-bold uppercase">VCF Contact Generator &bull; .getcontacts</span>
+              <span class="px-2.5 py-0.5 rounded-md bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-mono text-[10px] font-bold">Full Status Audience Synced</span>
+            </div>
+            <h2 class="text-lg sm:text-xl font-black text-white mt-1">Get Contacts (.vcf File) &amp; Linked WhatsApp Audience</h2>
+            <p class="text-xs text-slate-300">
+              Download all contacts from your linked WhatsApp as a <code class="text-emerald-300 font-mono">.vcf</code> contact file or type <code class="text-emerald-300 font-mono font-bold">.getcontacts</code> in WhatsApp. All contacts shown below automatically receive your WhatsApp Statuses!
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onclick="switchTab('gallery')"
+          class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
+        >
+          <span>⬅️</span>
+          <span>Back to Apps</span>
+        </button>
+      </div>
+
+      <div id="contactsToastBanner" class="hidden p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold"></div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left Card: One-Click VCF Generator & WhatsApp DM Dispatch -->
+        <div class="lg:col-span-5 p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-black text-white">1. Generate &amp; Download .VCF File</h3>
+            <span id="contactsTotalBadge" class="px-3 py-1 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono text-xs font-black">0 Contacts</span>
+          </div>
+
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Click <strong>Get Contacts (.vcf)</strong> below to immediately sync every contact from your linked WhatsApp address book, chat history, and groups, and download <code class="text-emerald-300 font-mono">Zaid_Ashiq_WhatsApp_Contacts.vcf</code>.
+          </p>
+
+          <div class="space-y-3">
+            <button
+              type="button"
+              onclick="triggerGetContactsVcfDownload()"
+              class="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm shadow-lg shadow-emerald-950/50 transition cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span>📇</span>
+              <span>Get Contacts — Download .VCF File Now</span>
+            </button>
+
+            <button
+              type="button"
+              onclick="sendVcfToOwnerDmUI()"
+              class="w-full py-3 px-4 rounded-2xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-cyan-300 font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span>📲</span>
+              <span>Send .VCF Contact File to My WhatsApp DM</span>
+            </button>
+
+            <button
+              type="button"
+              onclick="fetchContactsWorkspace(true)"
+              class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span>🔄</span>
+              <span>Force Re-Sync Contacts &amp; Status Audience</span>
+            </button>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+            <div class="font-bold text-amber-300">💡 Why Status Only Showed to a Few Contacts Before:</div>
+            <p class="text-slate-400 leading-relaxed">
+              Previously, WhatsApp Web/Baileys only knew contacts who messaged you recently. Now, <strong>Get Contacts</strong> indexes your full history, address book, and group members and feeds all of them into <code class="text-emerald-300 font-mono">status@broadcast</code> so your Status is visible to all linked contacts!
+            </p>
+          </div>
+        </div>
+
+        <!-- Right Card: Live Searchable Contacts & Status Audience Table -->
+        <div class="lg:col-span-7 p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 class="text-base font-black text-white">2. Linked WhatsApp Contacts &amp; Status Audience</h3>
+              <p class="text-xs text-slate-400">Contacts currently visible to your linked WhatsApp device &amp; Status broadcaster</p>
+            </div>
+            <input
+              type="text"
+              id="contactsSearchInput"
+              oninput="renderContactsTableUI()"
+              placeholder="Search name or +number..."
+              class="w-full sm:w-64 px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div id="contactsListContainer" class="max-h-[420px] overflow-y-auto space-y-2 pr-1">
+            <div class="p-8 text-center text-xs text-slate-500">Click "Get Contacts" or "Force Re-Sync" to view all linked contacts.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- 💬 TAB: GET CHATS / EXPORT CHAT (.ZIP + LIVE VIEW) & GET STATUS         -->
+    <!-- ======================================================================= -->
+    <section id="tab-chats" class="tab-content hidden space-y-6">
+      <div class="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-cyan-950/90 via-slate-900 to-indigo-950/80 border border-cyan-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-2xl shadow-lg shrink-0">
+            💬
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-md bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-mono text-[10px] font-bold uppercase">.getchat &lt;number&gt; &bull; .ZIP Export</span>
+              <span class="px-2.5 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono text-[10px] font-bold uppercase">Emoji Reply Status &rarr; Personal DM</span>
+            </div>
+            <h2 class="text-lg sm:text-xl font-black text-white mt-1">Get Chats / Export Chat (.zip + Live Reader) &amp; Get Status</h2>
+            <p class="text-xs text-slate-300">
+              Enter any phone number below to read the synced chat live on the panel or download it as a <code class="text-cyan-300 font-mono">.zip</code> archive (or send <code class="text-cyan-300 font-mono font-bold">.getchat &lt;number&gt;</code> in WhatsApp).
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onclick="switchTab('gallery')"
+          class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
+        >
+          <span>⬅️</span>
+          <span>Back to Apps</span>
+        </button>
+      </div>
+
+      <div id="chatsToastBanner" class="hidden p-4 rounded-2xl bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 text-xs font-bold"></div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left Column: Number Input, Export .ZIP & Synced Chats List -->
+        <div class="lg:col-span-5 space-y-5">
+          <div class="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-4">
+            <h3 class="text-base font-black text-white">1. Get Chat / Export Chat by Number</h3>
+            <p class="text-xs text-slate-400">
+              Enter the phone number with country code (e.g. <code class="text-cyan-300 font-mono">923001234567</code>) to open temporary live chat access and download its <code class="text-cyan-300 font-mono">.zip</code> file.
+            </p>
+
+            <div class="space-y-3">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-300 mb-1">Target WhatsApp Number</label>
+                <input
+                  type="text"
+                  id="getChatNumberInput"
+                  placeholder="e.g. +923001234567 or 03001234567"
+                  class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white font-mono placeholder-slate-500 outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onclick="loadAndPreviewChatByNumber()"
+                  class="py-3 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-lg shadow-cyan-950/50 transition cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <span>🔓</span>
+                  <span>Open Live Chat Access</span>
+                </button>
+                <button
+                  type="button"
+                  onclick="downloadChatZipForNumber()"
+                  class="py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-950/50 transition cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <span>📦</span>
+                  <span>Download Chat (.zip)</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onclick="sendChatZipToOwnerDmUI()"
+                class="w-full py-2.5 px-4 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/40 text-indigo-300 font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <span>📲</span>
+                <span>Send Chat .ZIP Archive to My WhatsApp DM</span>
+              </button>
+            </div>
+
+            <div class="pt-3 border-t border-slate-800 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-300">Recently Synced Chats on Linked Device</span>
+                <button type="button" onclick="fetchChatsWorkspace()" class="text-[11px] text-cyan-400 hover:underline cursor-pointer">Refresh</button>
+              </div>
+              <div id="syncedChatsListContainer" class="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+                <div class="text-xs text-slate-500 py-4 text-center">No chats indexed yet.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Get Status Card (Reply Any Emoji on Status -> Personal DM) -->
+          <div class="p-6 rounded-3xl bg-slate-900/80 border border-amber-500/30 space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">📥</span>
+                <h3 class="text-base font-black text-white">Get Status (Emoji Reply &rarr; DM)</h3>
+              </div>
+              <button type="button" onclick="fetchCapturedStatusesUI()" class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-[11px] font-bold cursor-pointer">Refresh</button>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              When viewing any contact's WhatsApp Status on your phone, simply <strong>reply to that Status with any Emoji</strong> (e.g. 😍, 🔥, ❤️, 👍) or <code class="text-amber-300 font-mono">.getstatus</code> — the bot will automatically download that Status and send it to your <strong>Personal WhatsApp DM</strong>!
+            </p>
+            <div id="capturedStatusesListContainer" class="max-h-52 overflow-y-auto space-y-2 pr-1">
+              <div class="text-xs text-slate-500 py-3 text-center">Captured statuses from contacts will appear here for 1-click DM forwarding.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Temporary Live Chat Access Reader -->
+        <div class="lg:col-span-7 p-6 rounded-3xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div>
+              <h3 id="liveChatViewerTitle" class="text-base font-black text-white">2. Temporary Live Chat Access Viewer</h3>
+              <p id="liveChatViewerSub" class="text-xs text-slate-400">Enter a phone number on the left or click a synced chat to read messages here</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="liveChatMsgCountBadge" class="px-3 py-1 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-mono text-xs font-bold">0 Messages</span>
+            </div>
+          </div>
+
+          <div id="liveChatMessagesViewport" class="h-[460px] overflow-y-auto p-4 rounded-2xl bg-slate-950 border border-slate-800/90 space-y-3">
+            <div class="h-full flex flex-col items-center justify-center text-center text-slate-500 text-xs space-y-2">
+              <span class="text-3xl">💬</span>
+              <p>Enter any contact number and click <strong>Open Live Chat Access</strong> to read all messages synced by your linked WhatsApp device.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- Global Footer -->
@@ -4656,6 +5034,14 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
     <button type="button" onclick="openVaultWithFilter('view_once')" class="group hidden xs:flex flex-col items-center gap-0.5 px-2 py-1 rounded-2xl hover:bg-slate-800/70 transition cursor-pointer" title="View-Once & Anti-Delete Vault">
       <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-lg shadow-md group-hover:scale-110 transition-transform">🔓</span>
       <span class="text-[9px] font-bold text-slate-200">Vault</span>
+    </button>
+    <button type="button" onclick="switchTab('contacts')" class="group flex flex-col items-center gap-0.5 px-2 py-1 rounded-2xl hover:bg-slate-800/70 transition cursor-pointer" title="Get Contacts (.vcf)">
+      <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-lg shadow-md group-hover:scale-110 transition-transform">📇</span>
+      <span class="text-[9px] font-bold text-emerald-300">Contacts</span>
+    </button>
+    <button type="button" onclick="switchTab('chats')" class="group flex flex-col items-center gap-0.5 px-2 py-1 rounded-2xl hover:bg-slate-800/70 transition cursor-pointer" title="Get Chats / Export Chat (.zip)">
+      <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-lg shadow-md group-hover:scale-110 transition-transform">💬</span>
+      <span class="text-[9px] font-bold text-cyan-300">Get Chats</span>
     </button>
     <button type="button" onclick="switchTab('location')" class="group hidden sm:flex flex-col items-center gap-0.5 px-2 py-1 rounded-2xl hover:bg-slate-800/70 transition cursor-pointer" title="Native Live Location">
       <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-400 to-emerald-600 flex items-center justify-center text-lg shadow-md group-hover:scale-110 transition-transform">📍</span>
@@ -5198,6 +5584,18 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
         badge: '.char {link} 💞',
         desc: 'Automatically react with custom emoji on every new post of any WhatsApp Channel link'
       },
+      contacts: {
+        title: 'Get Contacts (.vcf Generator & Status Sync)',
+        icon: '📇',
+        badge: '.getcontacts • VCF',
+        desc: 'Generate a .vcf file of all contacts in your linked WhatsApp & sync full Status audience'
+      },
+      chats: {
+        title: 'Get Chats / Export Chat (.zip + Live Reader) & Get Status',
+        icon: '💬',
+        badge: '.getchat • .getstatus',
+        desc: 'Export any number chat as a .zip archive, view live chat messages, or reply with any emoji on a Status to save to DM'
+      },
       appdeploy: {
         title: 'AI Website & App Builder • AppDeploy.ai',
         icon: '🚀',
@@ -5305,6 +5703,11 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
       }
       if (tabId === 'autoreact') fetchAutoReactConfig();
       if (tabId === 'char') fetchCharRules();
+      if (tabId === 'contacts') fetchContactsWorkspace(false);
+      if (tabId === 'chats') {
+        fetchChatsWorkspace();
+        fetchCapturedStatusesUI();
+      }
       if (tabId === 'simdb') fetchSimDbStatus();
       if (tabId === 'appdeploy') fetchAppDeployStudioStatus();
     }
@@ -7609,6 +8012,30 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
         action: () => switchTab('autoreact')
       },
       {
+        id: 'contacts',
+        name: 'Get Contacts',
+        sub: '.getcontacts VCF',
+        icon: '📇',
+        image: '',
+        badge: '.VCF',
+        badgeColor: 'bg-emerald-300 text-slate-950',
+        gradient: 'from-emerald-400 via-teal-500 to-cyan-600',
+        category: 'messaging',
+        action: () => switchTab('contacts')
+      },
+      {
+        id: 'chats',
+        name: 'Get Chats',
+        sub: '.getchat ZIP + View',
+        icon: '💬',
+        image: '',
+        badge: '.ZIP',
+        badgeColor: 'bg-cyan-300 text-slate-950',
+        gradient: 'from-cyan-400 via-sky-500 to-indigo-600',
+        category: 'messaging',
+        action: () => switchTab('chats')
+      },
+      {
         id: 'char',
         name: 'Channel React',
         sub: '.char Link 💞',
@@ -8398,6 +8825,15 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
       setTimeout(() => el.classList.add('hidden'), 4500);
     }
 
+    let cachedAutoReactConfig = {
+      statusReact: true,
+      clientsMsgReact: false,
+      everyMsgReact: false,
+      statusCustomEmoji: '❤️',
+      clientsCustomEmoji: '❤️',
+      everyCustomEmoji: '❤️'
+    };
+
     function selectAutoReactServiceCard(serviceKey) {
       focusedAutoReactService = ['status', 'clients', 'every'].includes(serviceKey) ? serviceKey : 'status';
       ['status', 'clients', 'every'].forEach(k => {
@@ -8411,25 +8847,47 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
       });
       const titleEl = document.getElementById('arFocusedServiceTitle');
       if (titleEl) {
-        titleEl.textContent = `${AUTO_REACT_TITLES[focusedAutoReactService]} — Choose ON or OFF:`;
+        titleEl.textContent = `${AUTO_REACT_TITLES[focusedAutoReactService]} — Choose ON/OFF & Custom Emoji:`;
+      }
+      const focusedEmojiInput = document.getElementById('arFocusedCustomEmojiInput');
+      if (focusedEmojiInput) {
+        const emojiMap = {
+          status: cachedAutoReactConfig.statusCustomEmoji || '❤️',
+          clients: cachedAutoReactConfig.clientsCustomEmoji || '❤️',
+          every: cachedAutoReactConfig.everyCustomEmoji || '❤️'
+        };
+        focusedEmojiInput.value = emojiMap[focusedAutoReactService] || '❤️';
       }
     }
 
     function renderAutoReactConfigUI(cfg) {
       if (!cfg) return;
+      cachedAutoReactConfig = { ...cachedAutoReactConfig, ...cfg };
       const map = {
         status: Boolean(cfg.statusReact),
         clients: Boolean(cfg.clientsMsgReact),
         every: Boolean(cfg.everyMsgReact)
       };
+      const emojiMap = {
+        status: cfg.statusCustomEmoji || '❤️',
+        clients: cfg.clientsCustomEmoji || '❤️',
+        every: cfg.everyCustomEmoji || '❤️'
+      };
 
       Object.keys(map).forEach(k => {
         const isOn = map[k];
+        const emojiVal = emojiMap[k];
         const badge = document.getElementById('arBadge-' + k);
         const btnOn = document.getElementById('arBtnOn-' + k);
         const btnOff = document.getElementById('arBtnOff-' + k);
+        const emojiPreview = document.getElementById('arEmojiPreview-' + k);
+        const emojiInput = document.getElementById('arCustomEmojiInput-' + k);
+
+        if (emojiPreview) emojiPreview.textContent = emojiVal;
+        if (emojiInput && document.activeElement !== emojiInput) emojiInput.value = emojiVal;
+
         if (badge) {
-          badge.textContent = isOn ? 'ON' : 'OFF';
+          badge.textContent = isOn ? `ON (${emojiVal})` : 'OFF';
           badge.className = isOn
             ? 'px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono text-[11px] font-black'
             : 'px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono text-[11px] font-black';
@@ -8445,6 +8903,11 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
             : 'py-2 px-3 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-white font-bold text-xs transition cursor-pointer';
         }
       });
+
+      const focusedEmojiInput = document.getElementById('arFocusedCustomEmojiInput');
+      if (focusedEmojiInput && document.activeElement !== focusedEmojiInput) {
+        focusedEmojiInput.value = emojiMap[focusedAutoReactService] || '❤️';
+      }
     }
 
     async function fetchAutoReactConfig() {
@@ -8461,10 +8924,21 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
 
     async function setAutoReactServiceState(serviceKey, turnOn) {
       selectAutoReactServiceCard(serviceKey);
+      const cardEmojiInput = document.getElementById('arCustomEmojiInput-' + serviceKey);
+      const customEmoji = String(cardEmojiInput?.value || '❤️').trim() || '❤️';
       const payload = {};
-      if (serviceKey === 'status') payload.statusReact = Boolean(turnOn);
-      if (serviceKey === 'clients') payload.clientsMsgReact = Boolean(turnOn);
-      if (serviceKey === 'every') payload.everyMsgReact = Boolean(turnOn);
+      if (serviceKey === 'status') {
+        payload.statusReact = Boolean(turnOn);
+        if (turnOn) payload.statusCustomEmoji = customEmoji;
+      }
+      if (serviceKey === 'clients') {
+        payload.clientsMsgReact = Boolean(turnOn);
+        if (turnOn) payload.clientsCustomEmoji = customEmoji;
+      }
+      if (serviceKey === 'every') {
+        payload.everyMsgReact = Boolean(turnOn);
+        if (turnOn) payload.everyCustomEmoji = customEmoji;
+      }
 
       try {
         const res = await fetch('/api/autoreact/config', {
@@ -8475,13 +8949,65 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
         const data = await res.json();
         if (data.success && data.config) {
           renderAutoReactConfigUI(data.config);
-          showAutoReactToast(`⚡ ${AUTO_REACT_TITLES[serviceKey]} turned ${turnOn ? 'ON ✅' : 'OFF ❌'}`);
+          if (turnOn) {
+            const focusedEmojiInput = document.getElementById('arFocusedCustomEmojiInput');
+            if (focusedEmojiInput) focusedEmojiInput.focus();
+            showAutoReactToast(`⚡ ${AUTO_REACT_TITLES[serviceKey]} turned ON ✅ with Custom Emoji ${customEmoji}! You can also customize the emoji below.`);
+          } else {
+            showAutoReactToast(`⚡ ${AUTO_REACT_TITLES[serviceKey]} turned OFF ❌`);
+          }
         } else {
           showAutoReactToast('❌ ' + (data.error || 'Failed to update Auto-React'), true);
         }
       } catch (err) {
         showAutoReactToast('❌ Network error: ' + err.message, true);
       }
+    }
+
+    async function saveServiceCustomEmoji(serviceKey, overrideEmoji = null) {
+      selectAutoReactServiceCard(serviceKey);
+      const inputEl = document.getElementById('arCustomEmojiInput-' + serviceKey);
+      const emoji = String(overrideEmoji || inputEl?.value || '❤️').trim() || '❤️';
+      const payload = {};
+      if (serviceKey === 'status') {
+        payload.statusCustomEmoji = emoji;
+        payload.statusReact = true;
+      } else if (serviceKey === 'clients') {
+        payload.clientsCustomEmoji = emoji;
+        payload.clientsMsgReact = true;
+      } else if (serviceKey === 'every') {
+        payload.everyCustomEmoji = emoji;
+        payload.everyMsgReact = true;
+      }
+
+      try {
+        const res = await fetch('/api/autoreact/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success && data.config) {
+          renderAutoReactConfigUI(data.config);
+          showAutoReactToast(`🎨 Custom Emoji for ${AUTO_REACT_TITLES[serviceKey]} set to ${emoji} (ON ✅)!`);
+        }
+      } catch (err) {
+        showAutoReactToast('❌ ' + err.message, true);
+      }
+    }
+
+    function pickFocusedEmojiPreset(emoji) {
+      const focusedInput = document.getElementById('arFocusedCustomEmojiInput');
+      if (focusedInput) focusedInput.value = emoji;
+      const cardInput = document.getElementById('arCustomEmojiInput-' + focusedAutoReactService);
+      if (cardInput) cardInput.value = emoji;
+      saveServiceCustomEmoji(focusedAutoReactService, emoji);
+    }
+
+    function applyFocusedCustomEmoji() {
+      const focusedInput = document.getElementById('arFocusedCustomEmojiInput');
+      const emoji = String(focusedInput?.value || '❤️').trim() || '❤️';
+      saveServiceCustomEmoji(focusedAutoReactService, emoji);
     }
 
     function triggerFocusedAutoReactToggle(turnOn) {
@@ -9997,6 +10523,314 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
         }
       } catch (err) {
         showCharToast(err.message, true);
+      }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 📇 GET CONTACTS (.VCF) & 💬 GET CHATS (.ZIP + LIVE VIEW) & 📥 GET STATUS
+    // ──────────────────────────────────────────────────────────────────────────
+    let cachedContactsArray = [];
+
+    function showContactsToast(msg, isError = false) {
+      const el = document.getElementById('contactsToastBanner');
+      if (!el) return;
+      el.textContent = msg;
+      el.className = isError
+        ? 'p-4 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-bold'
+        : 'p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold';
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 6000);
+    }
+
+    function showChatsToast(msg, isError = false) {
+      const el = document.getElementById('chatsToastBanner');
+      if (!el) return;
+      el.textContent = msg;
+      el.className = isError
+        ? 'p-4 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-bold'
+        : 'p-4 rounded-2xl bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 text-xs font-bold';
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 6000);
+    }
+
+    async function fetchContactsWorkspace(forceSync = false) {
+      try {
+        const res = await fetch('/api/contacts?sync=' + (forceSync ? '1' : '0'));
+        const data = await res.json();
+        if (res.ok && data.success) {
+          cachedContactsArray = Array.isArray(data.contacts) ? data.contacts : [];
+          const badge = document.getElementById('contactsTotalBadge');
+          if (badge) badge.textContent = `${cachedContactsArray.length} Contacts`;
+          renderContactsTableUI();
+          if (forceSync) {
+            showContactsToast(`Synced ${cachedContactsArray.length} contacts from linked WhatsApp! Status visibility updated for all contacts.`);
+          }
+        }
+      } catch (err) {
+        showContactsToast('Failed to load contacts: ' + err.message, true);
+      }
+    }
+
+    function renderContactsTableUI() {
+      const container = document.getElementById('contactsListContainer');
+      if (!container) return;
+      const q = (document.getElementById('contactsSearchInput')?.value || '').trim().toLowerCase();
+      const filtered = cachedContactsArray.filter(c => {
+        if (!q) return true;
+        return String(c.name || '').toLowerCase().includes(q) || String(c.phone || '').includes(q);
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-xs text-slate-500">No contacts matched. Click "Force Re-Sync Contacts" or "Get Contacts (.vcf)" while your WhatsApp is linked.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.slice(0, 300).map((c, idx) => `
+        <div class="p-3 rounded-xl bg-slate-950 border border-slate-800/90 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono text-[10px] font-bold flex items-center justify-center shrink-0">${idx + 1}</span>
+            <div class="min-w-0">
+              <div class="text-xs font-bold text-white truncate">${escapeHtmlSafe(c.name || ('+' + c.phone))}</div>
+              <div class="text-[11px] font-mono text-emerald-400">+${escapeHtmlSafe(c.phone)}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 text-[10px] font-mono">Status Ready</span>
+            <button
+              type="button"
+              onclick="openChatForContactNumber('${escapeHtmlSafe(c.phone)}')"
+              class="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold cursor-pointer"
+            >
+              💬 Get Chat
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtmlSafe(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function triggerGetContactsVcfDownload() {
+      switchTab('contacts');
+      fetchContactsWorkspace(true);
+      const link = document.createElement('a');
+      link.href = '/api/contacts/vcf?t=' + Date.now();
+      link.download = 'Zaid_Ashiq_WhatsApp_Contacts.vcf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showContactsToast('Downloading Zaid_Ashiq_WhatsApp_Contacts.vcf and syncing all contacts for WhatsApp Status visibility!');
+    }
+
+    async function sendVcfToOwnerDmUI() {
+      try {
+        showContactsToast('Generating .vcf file and sending to your WhatsApp DM...');
+        const res = await fetch('/api/contacts/send-vcf', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showContactsToast(data.message);
+          fetchContactsWorkspace(false);
+        } else {
+          showContactsToast(data.error || 'Could not send .vcf to WhatsApp DM', true);
+        }
+      } catch (err) {
+        showContactsToast(err.message, true);
+      }
+    }
+
+    function openChatForContactNumber(phone) {
+      switchTab('chats');
+      const input = document.getElementById('getChatNumberInput');
+      if (input) input.value = phone;
+      loadAndPreviewChatByNumber(phone);
+    }
+
+    async function fetchChatsWorkspace() {
+      try {
+        const res = await fetch('/api/chats/list');
+        const data = await res.json();
+        const container = document.getElementById('syncedChatsListContainer');
+        if (!container) return;
+        const list = Array.isArray(data.chats) ? data.chats : [];
+        if (list.length === 0) {
+          container.innerHTML = `<div class="text-xs text-slate-500 py-4 text-center">No chats archived yet. Enter any number above to inspect or export!</div>`;
+          return;
+        }
+        container.innerHTML = list.slice(0, 80).map(item => `
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-cyan-500/40 flex items-center justify-between gap-2 transition">
+            <div class="min-w-0 cursor-pointer" onclick="openChatForContactNumber('${escapeHtmlSafe(item.number)}')">
+              <div class="text-xs font-bold text-white truncate">${escapeHtmlSafe(item.contactName || ('+' + item.number))}</div>
+              <div class="text-[10px] font-mono text-cyan-400">+${escapeHtmlSafe(item.number)} &bull; ${item.messageCount || 0} msgs</div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onclick="openChatForContactNumber('${escapeHtmlSafe(item.number)}')"
+                class="px-2 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 text-[10px] font-bold cursor-pointer"
+              >
+                Read
+              </button>
+              <button
+                type="button"
+                onclick="downloadChatZipForNumber('${escapeHtmlSafe(item.number)}')"
+                class="px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-[10px] font-bold cursor-pointer"
+              >
+                .ZIP
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } catch (_) {}
+    }
+
+    async function loadAndPreviewChatByNumber(overrideNum) {
+      const inputEl = document.getElementById('getChatNumberInput');
+      const rawNum = overrideNum || (inputEl ? inputEl.value.trim() : '');
+      if (!rawNum) {
+        showChatsToast('Please enter a WhatsApp phone number first (e.g. +923001234567).', true);
+        return;
+      }
+      try {
+        const res = await fetch('/api/chats/view?number=' + encodeURIComponent(rawNum));
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          showChatsToast(data.error || 'Could not load chat', true);
+          return;
+        }
+        const titleEl = document.getElementById('liveChatViewerTitle');
+        const subEl = document.getElementById('liveChatViewerSub');
+        const badgeEl = document.getElementById('liveChatMsgCountBadge');
+        const viewport = document.getElementById('liveChatMessagesViewport');
+
+        if (titleEl) titleEl.textContent = `Live Chat: ${data.contactName} (+${data.cleanNumber})`;
+        if (subEl) subEl.textContent = `Temporary Live Chat Access • ${data.totalMessages} synced messages read from linked device`;
+        if (badgeEl) badgeEl.textContent = `${data.totalMessages} Messages`;
+
+        const msgs = Array.isArray(data.messages) ? data.messages : [];
+        if (msgs.length === 0) {
+          viewport.innerHTML = `
+            <div class="h-full flex flex-col items-center justify-center text-center text-slate-400 text-xs space-y-2 p-6">
+              <span class="text-3xl">📭</span>
+              <p class="font-bold text-white">No messages synced yet for +${escapeHtmlSafe(data.cleanNumber)}</p>
+              <p class="text-slate-500">As soon as messages are sent or received with +${escapeHtmlSafe(data.cleanNumber)} on your linked device, they will appear here and in the .zip export.</p>
+            </div>
+          `;
+        } else {
+          viewport.innerHTML = msgs.map(m => {
+            const dt = new Date(m.timestamp || Date.now()).toLocaleString();
+            const alignClass = m.fromMe ? 'items-end' : 'items-start';
+            const bubbleClass = m.fromMe
+              ? 'bg-emerald-600/25 border-emerald-500/40 text-emerald-100'
+              : 'bg-slate-900 border-slate-700 text-slate-200';
+            return `
+              <div class="flex flex-col ${alignClass}">
+                <div class="max-w-[85%] p-3 rounded-2xl border ${bubbleClass} space-y-1">
+                  <div class="flex items-center justify-between gap-3 text-[10px] font-mono opacity-75">
+                    <span class="font-bold">${escapeHtmlSafe(m.senderName || (m.fromMe ? 'Owner (Me)' : ('+' + data.cleanNumber)))}</span>
+                    <span>${escapeHtmlSafe(dt)}</span>
+                  </div>
+                  <div class="text-xs whitespace-pre-wrap break-words">${escapeHtmlSafe(m.text || ('[' + (m.mediaType || 'message') + ']'))}</div>
+                </div>
+              </div>
+            `;
+          }).join('');
+          viewport.scrollTop = viewport.scrollHeight;
+        }
+        fetchChatsWorkspace();
+      } catch (err) {
+        showChatsToast(err.message, true);
+      }
+    }
+
+    function downloadChatZipForNumber(overrideNum) {
+      const inputEl = document.getElementById('getChatNumberInput');
+      const rawNum = overrideNum || (inputEl ? inputEl.value.trim() : '');
+      if (!rawNum) {
+        showChatsToast('Please enter a WhatsApp phone number first to export its .zip archive.', true);
+        return;
+      }
+      const clean = rawNum.replace(/\D/g, '');
+      const link = document.createElement('a');
+      link.href = '/api/chats/export?number=' + encodeURIComponent(rawNum) + '&t=' + Date.now();
+      link.download = `WhatsApp_Chat_${clean}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showChatsToast(`Downloading WhatsApp_Chat_${clean}.zip (contains TXT, HTML & JSON chat history)!`);
+    }
+
+    async function sendChatZipToOwnerDmUI() {
+      const inputEl = document.getElementById('getChatNumberInput');
+      const rawNum = inputEl ? inputEl.value.trim() : '';
+      if (!rawNum) {
+        showChatsToast('Please enter a WhatsApp phone number first.', true);
+        return;
+      }
+      try {
+        showChatsToast('Packaging chat .zip archive and sending to your WhatsApp DM...');
+        const res = await fetch('/api/chats/send-zip', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ number: rawNum })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showChatsToast(data.message);
+        } else {
+          showChatsToast(data.error || 'Failed to send chat .zip to DM', true);
+        }
+      } catch (err) {
+        showChatsToast(err.message, true);
+      }
+    }
+
+    async function fetchCapturedStatusesUI() {
+      try {
+        const res = await fetch('/api/status/captured');
+        const data = await res.json();
+        const container = document.getElementById('capturedStatusesListContainer');
+        if (!container) return;
+        const list = Array.isArray(data.statuses) ? data.statuses : [];
+        if (list.length === 0) {
+          container.innerHTML = `<div class="text-xs text-slate-500 py-3 text-center">Reply with any Emoji on any WhatsApp Status on your phone to automatically receive it in your Personal DM!</div>`;
+          return;
+        }
+        container.innerHTML = list.map(st => `
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-xs font-bold text-white truncate">${escapeHtmlSafe(st.pushName || ('+' + st.senderPhone))}</div>
+              <div class="text-[10px] font-mono text-amber-300">[${escapeHtmlSafe(st.mediaType.toUpperCase())}] ${escapeHtmlSafe(st.caption || 'No caption')}</div>
+            </div>
+            <button
+              type="button"
+              onclick="forwardCapturedStatusToDmUI('${escapeHtmlSafe(st.id)}')"
+              class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[10px] shrink-0 cursor-pointer"
+            >
+              📥 Send to DM
+            </button>
+          </div>
+        `).join('');
+      } catch (_) {}
+    }
+
+    async function forwardCapturedStatusToDmUI(id) {
+      try {
+        const res = await fetch(`/api/status/captured/${encodeURIComponent(id)}/forward`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showChatsToast(data.message);
+        } else {
+          showChatsToast(data.error || 'Could not forward status to DM', true);
+        }
+      } catch (err) {
+        showChatsToast(err.message, true);
       }
     }
   </script>

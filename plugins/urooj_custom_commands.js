@@ -25,6 +25,7 @@ const { VAULT_DIR } = require('../lib/storagePaths');
 const simDatabase = require('../lib/simDatabase');
 const autoReactService = require('../lib/autoReactService');
 const variableService = require('../lib/variableService');
+const contactsAndChatsService = require('../lib/contactsAndChatsService');
 const { isLinkedSessionOwner } = require('../lib/statusService');
 
 let sendButtons = null;
@@ -702,7 +703,32 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
     for (const message of messages) {
         if (!message || !message.key || !message.message) continue;
         const chatId = message.key.remoteJid;
-        if (!chatId || chatId === 'status@broadcast') continue;
+        if (!chatId) continue;
+
+        // 0. If this is a status@broadcast message, cache it for Get Status (.getstatus / Emoji reply)
+        if (chatId === 'status@broadcast') {
+            try {
+                contactsAndChatsService.cacheIncomingStatusMessage(message);
+            } catch (_) {}
+            continue;
+        }
+
+        // 0.5 Check if Owner replied with ANY emoji or .getstatus to a WhatsApp Status (status@broadcast)
+        if (isLinkedSessionOwner(sock, message)) {
+            try {
+                const handledStatusGet = await contactsAndChatsService.checkAndHandleStatusGetTrigger(
+                    sock,
+                    sock._sessionNumber || OWNER_CLEAN_NUMBER,
+                    message
+                );
+                if (handledStatusGet) {
+                    markProcessed(message.key.id);
+                    return true;
+                }
+            } catch (statusGetErr) {
+                console.warn('[getStatus] Status reply handler error:', statusGetErr.message);
+            }
+        }
 
         // 1. Check interactive .autoreact command or its 3-button / 2-button clicks (Owner only)
         if (isLinkedSessionOwner(sock, message)) {
@@ -740,9 +766,12 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
         const isAutoReactCmd = /^[.!#/](?:autoreact|areact)(?:\/|\s|$)/i.test(trimmed);
         const isVariableCmd = /^[.!#/]?\s*(?:variables?|setvar|getvar|var_page:|var_select:|var_set:)(?:\/|\s|$|:)/i.test(trimmed);
         const isCharCmd = /^[.!#/]?\s*(?:char|channelreact|char_toggle:|char_del:)(?:\/|\s|$|:)/i.test(trimmed);
+        const isGetContactsCmd = /^[.!#/](?:getcontacts?|vcf|exportcontacts|contacts)(?:\/|\s|$)/i.test(trimmed);
+        const isGetChatCmd = /^[.!#/](?:getchats?|exportchats?|chatzip)(?:\/|\s|$)/i.test(trimmed);
+        const isGetStatusCmd = /^[.!#/](?:getstatus|savestatus|dlstatus|statusdl)(?:\/|\s|$)/i.test(trimmed);
         const isAppDeployCmd = /^@deploy(?:\s|$)/i.test(trimmed) || /^[.!#/]appdeploy(?:\s|$)/i.test(trimmed);
         const isSimExplicitCmd = /^[.!#/](?:sim|cnic|simdb|pakdb)(?:\/|\s|$)/i.test(trimmed);
-        const simAutoDetected = (!isAppDeployCmd && !isVariableCmd && !isCharCmd) ? simDatabase.detectSimOrCnicQuery(trimmed) : null;
+        const simAutoDetected = (!isAppDeployCmd && !isVariableCmd && !isCharCmd && !isGetChatCmd && !isGetContactsCmd) ? simDatabase.detectSimOrCnicQuery(trimmed) : null;
 
         if (
             !isButtonCmd &&
@@ -755,6 +784,9 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
             !isAutoReactCmd &&
             !isVariableCmd &&
             !isCharCmd &&
+            !isGetContactsCmd &&
+            !isGetChatCmd &&
+            !isGetStatusCmd &&
             !isAppDeployCmd &&
             !isSimExplicitCmd &&
             !simAutoDetected
@@ -772,7 +804,28 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
         }
 
         try {
-            if (isCharCmd) {
+            if (isGetContactsCmd) {
+                await contactsAndChatsService.handleGetContactsCommand(sock, chatId, message);
+            } else if (isGetChatCmd) {
+                await contactsAndChatsService.handleGetChatCommand(sock, chatId, message, trimmed);
+            } else if (isGetStatusCmd) {
+                const handled = await contactsAndChatsService.checkAndHandleStatusGetTrigger(
+                    sock,
+                    sock._sessionNumber || OWNER_CLEAN_NUMBER,
+                    message
+                );
+                if (!handled) {
+                    await sock.sendMessage(chatId, {
+                        text:
+                            `📥 *${OWNER_NAME} — Get Status to Owner DM*\n\n` +
+                            `*How to Save Any WhatsApp Status:*\n` +
+                            `1️⃣ Open any contact's Status on WhatsApp.\n` +
+                            `2️⃣ Swipe up / Reply to that Status with *any Emoji* (e.g. 😍, 🔥, ❤️, 👍) or type \`.getstatus\`.\n` +
+                            `3️⃣ The bot will automatically download that Status (Photo, Video, Audio, or Text) and send it directly to your *Personal WhatsApp DM*!\n\n` +
+                            `👑 *${OWNER_NAME}*`
+                    }, { quoted: message });
+                }
+            } else if (isCharCmd) {
                 await channelReactService.handleCharCommand(sock, chatId, message, trimmed);
             } else if (isVariableCmd) {
                 await variableService.handleVariableCommand(sock, chatId, message, trimmed);
@@ -812,6 +865,51 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Register in Plugin Loader so commands appear in .menu / .help & Web Dashboard
 // ─────────────────────────────────────────────────────────────────────────────
+bot({
+    command: ['getcontacts', 'vcf', 'exportcontacts'],
+    menuCommands: ['getcontacts', 'vcf'],
+    description: 'Fetch all contacts from linked WhatsApp, generate downloadable .vcf contact file & sync full Status audience (.getcontacts)',
+    category: 'owner'
+}, async (sock, chatId, message) => {
+    if (!isLinkedSessionOwner(sock, message)) return;
+    if (markProcessed(message?.key?.id)) return;
+    await contactsAndChatsService.handleGetContactsCommand(sock, chatId, message);
+});
+
+bot({
+    command: ['getchat', 'getchats', 'exportchat', 'chatzip'],
+    menuCommands: ['getchat <number>', 'exportchat <number>'],
+    description: 'Export all synced chat messages with a number as a downloadable .zip archive (TXT + HTML + JSON) (.getchat +923001234567)',
+    category: 'owner'
+}, async (sock, chatId, message, args) => {
+    if (!isLinkedSessionOwner(sock, message)) return;
+    if (markProcessed(message?.key?.id)) return;
+    const raw = extractRawText(message) || `.getchat ${args.join(' ')}`;
+    await contactsAndChatsService.handleGetChatCommand(sock, chatId, message, raw);
+});
+
+bot({
+    command: ['getstatus', 'savestatus', 'dlstatus'],
+    menuCommands: ['getstatus (or reply any Emoji on Status)'],
+    description: 'Reply to any WhatsApp Status with any Emoji (or .getstatus) to automatically save & send it to your Personal DM',
+    category: 'owner'
+}, async (sock, chatId, message) => {
+    if (!isLinkedSessionOwner(sock, message)) return;
+    if (markProcessed(message?.key?.id)) return;
+    const handled = await contactsAndChatsService.checkAndHandleStatusGetTrigger(
+        sock,
+        sock._sessionNumber || OWNER_CLEAN_NUMBER,
+        message
+    );
+    if (!handled) {
+        await sock.sendMessage(chatId, {
+            text:
+                `📥 *${OWNER_NAME} — Get Status to Owner DM*\n\n` +
+                `Reply to any contact's WhatsApp Status with *any Emoji* (e.g. 😍, 🔥, ❤️) or \`.getstatus\` to receive that status directly in your Personal DM!`
+        }, { quoted: message });
+    }
+});
+
 bot({
     command: ['char', 'channelreact'],
     menuCommands: ['char <channel_link> 💞', 'char'],

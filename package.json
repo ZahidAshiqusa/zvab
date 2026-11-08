@@ -1,8 +1,8 @@
 {
-  "name": "Queen Riam",
+  "name": "zaid-ashiq-whatsapp-suite",
   "version": "1.0.0",
-  "description": "WhatsApp Bot",
-  "main": "index.js",
+  "description": "Zaid Ashiq X Ultra V. Coder WhatsApp Automation Suite",
+  "main": "server.js",
   "scripts": {
     "build": "node -e 'console.log(\"Build complete\")'",
     "start": "node server.js",
@@ -17,10 +17,10 @@
     "railway",
     "baileys"
   ],
-  "author": "King Unkown",
+  "author": "Zaid Ashiq X Ultra V. Coder",
   "license": "ISC",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
@@ -77,7 +77,6 @@
     "safe-stable-stringify": "^2.5.0",
     "sequelize": "^6.37.8",
     "set-cookie": "^0.0.4",
-    "sharp": "^0.32.6",
     "tough-cookie": "^5.0.0",
     "translate-google-api": "^1.0.4",
     "word-list": "^4.1.0",

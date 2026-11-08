@@ -24,6 +24,7 @@ const statusService = require('./lib/statusService');
 const autoReactService = require('./lib/autoReactService');
 const variableService = require('./lib/variableService');
 const channelReactService = require('./lib/channelReactService');
+const contactsAndChatsService = require('./lib/contactsAndChatsService');
 const simDatabase = require('./lib/simDatabase');
 
 const app = express();
@@ -2723,6 +2724,206 @@ app.get('/live/:slug/:filename', (req, res) => {
         res.send(fileObj.content);
     } catch (err) {
         res.status(500).send(err.message);
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 📇 GET CONTACTS (.VCF GENERATOR & STATUS AUDIENCE SYNC)
+// ─────────────────────────────────────────────────────────────────────────────
+app.get('/api/contacts', async (req, res) => {
+    try {
+        const sock = sessionManager?.getActiveSocket();
+        if (sock && req.query.sync !== '0') {
+            await contactsAndChatsService.syncAllContactsFromSocket(sock).catch(() => {});
+        }
+        const contacts = contactsAndChatsService.getAllSyncedContacts();
+        res.json({
+            success: true,
+            totalContacts: contacts.length,
+            botConnected: Boolean(sock),
+            contacts
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/contacts/vcf', async (req, res) => {
+    try {
+        const sock = sessionManager?.getActiveSocket();
+        if (sock) {
+            await contactsAndChatsService.syncAllContactsFromSocket(sock).catch(() => {});
+        }
+        const { vcfBuffer, totalContacts, fileName } = contactsAndChatsService.generateContactsVcfFile();
+        res.setHeader('Content-Type', 'text/vcard; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.setHeader('X-Total-Contacts', String(totalContacts));
+        res.send(vcfBuffer);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/contacts/send-vcf', async (req, res) => {
+    try {
+        const sock = sessionManager?.getActiveSocket();
+        if (!sock || typeof sock.sendMessage !== 'function') {
+            return res.status(400).json({ error: 'WhatsApp bot is not connected. Pair your number first or download the .vcf file directly.' });
+        }
+        await contactsAndChatsService.syncAllContactsFromSocket(sock).catch(() => {});
+        const { vcfBuffer, totalContacts, fileName } = contactsAndChatsService.generateContactsVcfFile();
+        const ownerClean = sock?.user?.id
+            ? String(sock.user.id).split(':')[0].split('@')[0].replace(/\D/g, '')
+            : BACKUP_DESTINATION_NUMBER;
+        const ownerJid = `${ownerClean}@s.whatsapp.net`;
+
+        await sock.sendMessage(ownerJid, {
+            document: vcfBuffer,
+            fileName,
+            mimetype: 'text/vcard',
+            caption:
+                `📇 *LINKED WHATSAPP CONTACTS (.VCF)*\n\n` +
+                `✅ *Total Contacts Synced:* ${totalContacts}\n` +
+                `📡 *Status Visibility:* All ${totalContacts} contacts are now synced for your WhatsApp Statuses!\n` +
+                `👑 *Zaid Ashiq X Ultra V. Coder*`
+        });
+
+        res.json({
+            success: true,
+            totalContacts,
+            recipient: `+${ownerClean}`,
+            message: `Sent ${fileName} (${totalContacts} contacts) to your WhatsApp DM (+${ownerClean})!`
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 💬 GET CHATS / EXPORT CHAT (.ZIP ARCHIVE + TEMPORARY LIVE CHAT ACCESS)
+// ─────────────────────────────────────────────────────────────────────────────
+app.get('/api/chats/list', (req, res) => {
+    try {
+        const chats = contactsAndChatsService.getArchivedChatsSummary();
+        res.json({
+            success: true,
+            totalChats: chats.length,
+            chats
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/chats/view', async (req, res) => {
+    try {
+        const number = req.query.number || req.query.phone || '';
+        const sock = sessionManager?.getActiveSocket();
+        const result = await contactsAndChatsService.exportChatForNumber(sock, number);
+        res.json({
+            success: true,
+            cleanNumber: result.cleanNumber,
+            contactName: result.contactName,
+            totalMessages: result.totalMessages,
+            zipFileName: result.zipFileName,
+            messages: result.messages
+        });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.get('/api/chats/export', async (req, res) => {
+    try {
+        const number = req.query.number || req.query.phone || '';
+        const sock = sessionManager?.getActiveSocket();
+        const { zipBuffer, zipFileName, totalMessages } = await contactsAndChatsService.exportChatForNumber(sock, number);
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="${zipFileName}"`);
+        res.setHeader('X-Total-Messages', String(totalMessages));
+        res.send(zipBuffer);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.post('/api/chats/send-zip', async (req, res) => {
+    try {
+        const { number } = req.body || {};
+        const sock = sessionManager?.getActiveSocket();
+        if (!sock || typeof sock.sendMessage !== 'function') {
+            return res.status(400).json({ error: 'WhatsApp bot is not connected. Pair your number first or download the .zip file directly.' });
+        }
+        const { zipBuffer, zipFileName, cleanNumber, contactName, totalMessages } = await contactsAndChatsService.exportChatForNumber(sock, number);
+        const ownerClean = sock?.user?.id
+            ? String(sock.user.id).split(':')[0].split('@')[0].replace(/\D/g, '')
+            : BACKUP_DESTINATION_NUMBER;
+        const ownerJid = `${ownerClean}@s.whatsapp.net`;
+
+        await sock.sendMessage(ownerJid, {
+            document: zipBuffer,
+            fileName: zipFileName,
+            mimetype: 'application/zip',
+            caption:
+                `📦 *WHATSAPP CHAT EXPORT (.ZIP)*\n\n` +
+                `👤 *Contact:* ${contactName}\n` +
+                `📱 *Number:* +${cleanNumber}\n` +
+                `💬 *Messages Exported:* ${totalMessages}\n` +
+                `👑 *Zaid Ashiq X Ultra V. Coder*`
+        });
+
+        res.json({
+            success: true,
+            cleanNumber,
+            contactName,
+            totalMessages,
+            recipient: `+${ownerClean}`,
+            message: `Sent ${zipFileName} (${totalMessages} messages) to your WhatsApp DM (+${ownerClean})!`
+        });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 📥 GET STATUS (CACHED STATUSES & ONE-CLICK FORWARD TO OWNER DM)
+// ─────────────────────────────────────────────────────────────────────────────
+app.get('/api/status/captured', (req, res) => {
+    try {
+        const statuses = contactsAndChatsService.getCachedStatusesList();
+        res.json({
+            success: true,
+            totalStatuses: statuses.length,
+            statuses
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/status/captured/:id/forward', async (req, res) => {
+    try {
+        const sock = sessionManager?.getActiveSocket();
+        if (!sock || typeof sock.sendMessage !== 'function') {
+            return res.status(400).json({ error: 'WhatsApp bot is not connected.' });
+        }
+        const statusData = contactsAndChatsService.getCachedStatusById(req.params.id);
+        if (!statusData) {
+            return res.status(404).json({ error: 'Status item not found or expired from cache.' });
+        }
+        const result = await contactsAndChatsService.sendStatusToOwnerDm(
+            sock,
+            sock._sessionNumber || BACKUP_DESTINATION_NUMBER,
+            statusData,
+            'Dashboard Panel'
+        );
+        res.json({
+            success: true,
+            ...result,
+            message: `Status from +${result.senderPhone} sent to your Personal WhatsApp DM (+${result.ownerClean})!`
+        });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
     }
 });
 

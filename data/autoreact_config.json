@@ -1,0 +1,14 @@
+{
+  "statusReact": true,
+  "clientsMsgReact": false,
+  "everyMsgReact": false,
+  "statusCustomEmoji": "💞",
+  "clientsCustomEmoji": "🔥",
+  "everyCustomEmoji": "👑",
+  "statusEmojis": [
+    "💞"
+  ],
+  "msgEmojis": [
+    "🔥"
+  ]
+}
