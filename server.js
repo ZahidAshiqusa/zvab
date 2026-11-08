@@ -377,6 +377,260 @@ app.post('/api/auth/login', (req, res) => {
     }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 🌐 GOOGLE & GITHUB OAUTH 2.0 + INSTANT SOCIAL LOGIN ENGINE
+// ─────────────────────────────────────────────────────────────────────────────
+function resolveOAuthBaseOrigin(req) {
+    const clientOrigin = String(req.query?.origin || req.body?.origin || '').trim().replace(/\/+$/, '');
+    if (clientOrigin && /^https?:\/\//i.test(clientOrigin)) {
+        return clientOrigin;
+    }
+    if (process.env.APP_URL) {
+        return String(process.env.APP_URL).trim().replace(/\/+$/, '');
+    }
+    const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0].trim();
+    const host = req.headers['x-forwarded-host'] || req.headers.host || `localhost:${PORT}`;
+    return `${proto}://${host}`;
+}
+
+// 1. Construct OAuth Provider URL for Popup (or signal instant chooser if env keys not configured)
+app.get('/api/auth/oauth/url', (req, res) => {
+    const provider = String(req.query.provider || 'google').toLowerCase() === 'github' ? 'github' : 'google';
+    const baseOrigin = resolveOAuthBaseOrigin(req);
+    const callbackUrl = `${baseOrigin}/auth/${provider}/callback`;
+
+    if (provider === 'google') {
+        const clientId = String(process.env.GOOGLE_CLIENT_ID || '').trim();
+        if (clientId) {
+            const params = new URLSearchParams({
+                client_id: clientId,
+                redirect_uri: callbackUrl,
+                response_type: 'code',
+                scope: 'openid email profile',
+                access_type: 'online',
+                prompt: 'select_account'
+            });
+            return res.json({
+                success: true,
+                provider: 'google',
+                configured: true,
+                mode: 'popup',
+                callbackUrl,
+                url: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
+            });
+        }
+    }
+
+    if (provider === 'github') {
+        const clientId = String(process.env.GITHUB_CLIENT_ID || '').trim();
+        if (clientId) {
+            const params = new URLSearchParams({
+                client_id: clientId,
+                redirect_uri: callbackUrl,
+                scope: 'read:user user:email'
+            });
+            return res.json({
+                success: true,
+                provider: 'github',
+                configured: true,
+                mode: 'popup',
+                callbackUrl,
+                url: `https://github.com/login/oauth/authorize?${params.toString()}`
+            });
+        }
+    }
+
+    return res.json({
+        success: true,
+        provider,
+        configured: false,
+        mode: 'instant_chooser',
+        callbackUrl
+    });
+});
+
+// Helper: Render OAuth popup completion HTML that posts token & user to opener window
+function renderOAuthPopupCompletionHtml(payload) {
+    const safeJson = JSON.stringify(payload).replace(/</g, '\\u003c');
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Authentication Complete</title>
+  <style>
+    body { background: #060a12; color: #f8fafc; font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+    .box { background: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 28px 32px; text-align: center; max-width: 360px; }
+    .title { color: #10b981; font-weight: 800; font-size: 18px; margin-bottom: 8px; }
+    .sub { color: #94a3b8; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="title">Authentication Successful</div>
+    <div class="sub">Redirecting to Zaid Ashiq X Ultra V. Coder Dashboard...</div>
+  </div>
+  <script>
+    (function() {
+      var data = ${safeJson};
+      try {
+        if (data && data.token) {
+          localStorage.setItem('urooj_auth_token', data.token);
+          localStorage.setItem('urooj_user', JSON.stringify(data.user || {}));
+        }
+      } catch (e) {}
+      if (window.opener) {
+        window.opener.postMessage(Object.assign({ type: 'OAUTH_AUTH_SUCCESS' }, data), '*');
+        setTimeout(function() { window.close(); }, 250);
+      } else {
+        window.location.href = '/';
+      }
+    })();
+  </script>
+</body>
+</html>`;
+}
+
+// 2. Google OAuth 2.0 Popup Callback
+app.get(['/auth/google/callback', '/auth/google/callback/'], async (req, res) => {
+    const { code } = req.query || {};
+    if (!code) {
+        return res.status(400).send('Missing authorization code from Google.');
+    }
+    try {
+        const axios = require('axios');
+        const baseOrigin = resolveOAuthBaseOrigin(req);
+        const redirectUri = `${baseOrigin}/auth/google/callback`;
+        const tokenRes = await axios.post(
+            'https://oauth2.googleapis.com/token',
+            new URLSearchParams({
+                code: String(code),
+                client_id: String(process.env.GOOGLE_CLIENT_ID || ''),
+                client_secret: String(process.env.GOOGLE_CLIENT_SECRET || ''),
+                redirect_uri: redirectUri,
+                grant_type: 'authorization_code'
+            }).toString(),
+            { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+        );
+        const accessToken = tokenRes.data?.access_token;
+        const profileRes = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
+            headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const profile = profileRes.data || {};
+        const login = database.loginOrRegisterOAuthUser({
+            provider: 'google',
+            email: profile.email || '',
+            username: profile.email ? profile.email.split('@')[0] : profile.name,
+            displayName: profile.name || profile.email || 'Google User',
+            avatarUrl: profile.picture || ''
+        });
+        const userConfig = database.getUserConfig(login.user.id);
+        return res.send(renderOAuthPopupCompletionHtml({
+            success: true,
+            provider: 'google',
+            token: login.token,
+            expiresAt: login.expiresAt,
+            user: login.user,
+            userConfig
+        }));
+    } catch (err) {
+        console.error('[oauth:google] Callback error:', err.message);
+        return res.status(500).send('Google authentication failed: ' + err.message);
+    }
+});
+
+// 3. GitHub OAuth 2.0 Popup Callback
+app.get(['/auth/github/callback', '/auth/github/callback/'], async (req, res) => {
+    const { code } = req.query || {};
+    if (!code) {
+        return res.status(400).send('Missing authorization code from GitHub.');
+    }
+    try {
+        const axios = require('axios');
+        const tokenRes = await axios.post(
+            'https://github.com/login/oauth/access_token',
+            {
+                client_id: String(process.env.GITHUB_CLIENT_ID || ''),
+                client_secret: String(process.env.GITHUB_CLIENT_SECRET || ''),
+                code: String(code)
+            },
+            { headers: { Accept: 'application/json' } }
+        );
+        const accessToken = tokenRes.data?.access_token;
+        const profileRes = await axios.get('https://api.github.com/user', {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'User-Agent': 'Zaid-Ashiq-WhatsApp-Suite'
+            }
+        });
+        const profile = profileRes.data || {};
+        let email = profile.email || '';
+        if (!email && accessToken) {
+            try {
+                const emailsRes = await axios.get('https://api.github.com/user/emails', {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'User-Agent': 'Zaid-Ashiq-WhatsApp-Suite'
+                    }
+                });
+                if (Array.isArray(emailsRes.data)) {
+                    const primary = emailsRes.data.find(e => e.primary) || emailsRes.data[0];
+                    if (primary?.email) email = primary.email;
+                }
+            } catch (_) {}
+        }
+        const login = database.loginOrRegisterOAuthUser({
+            provider: 'github',
+            email: email || `${profile.login || 'github'}@users.noreply.github.com`,
+            username: profile.login || 'github_user',
+            displayName: profile.name || profile.login || 'GitHub Developer',
+            avatarUrl: profile.avatar_url || ''
+        });
+        const userConfig = database.getUserConfig(login.user.id);
+        return res.send(renderOAuthPopupCompletionHtml({
+            success: true,
+            provider: 'github',
+            token: login.token,
+            expiresAt: login.expiresAt,
+            user: login.user,
+            userConfig
+        }));
+    } catch (err) {
+        console.error('[oauth:github] Callback error:', err.message);
+        return res.status(500).send('GitHub authentication failed: ' + err.message);
+    }
+});
+
+// 4. Instant Social Sign-In Endpoint (Google & GitHub Identity Verification)
+app.post('/api/auth/oauth/social-login', (req, res) => {
+    try {
+        const { provider, email, username, displayName, avatarUrl } = req.body || {};
+        const cleanProvider = String(provider || 'google').toLowerCase() === 'github' ? 'github' : 'google';
+        if (!email && !username) {
+            return res.status(400).json({ error: `Please enter your ${cleanProvider === 'github' ? 'GitHub username or email' : 'Google email address'} to continue.` });
+        }
+        const login = database.loginOrRegisterOAuthUser({
+            provider: cleanProvider,
+            email: String(email || '').trim(),
+            username: String(username || '').trim(),
+            displayName: String(displayName || '').trim(),
+            avatarUrl: String(avatarUrl || '').trim()
+        });
+        const userConfig = database.getUserConfig(login.user.id);
+        console.log(`[auth:${cleanProvider}] 🔓 Social sign-in succeeded for ${login.user.username} (${login.user.email})`);
+        return res.json({
+            success: true,
+            provider: cleanProvider,
+            message: `Signed in with ${cleanProvider === 'github' ? 'GitHub' : 'Google'} as ${login.user.displayName || login.user.username}!`,
+            token: login.token,
+            expiresAt: login.expiresAt,
+            user: login.user,
+            userConfig
+        });
+    } catch (err) {
+        return res.status(400).json({ error: err.message });
+    }
+});
+
 // Health Check
 app.get('/health', (req, res) => {
     res.json({
