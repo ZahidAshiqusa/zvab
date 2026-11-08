@@ -220,69 +220,32 @@ function requireAdmin(req, res, next) {
 
 // ── API ROUTES ─────────────────────────────────────────────────────────────
 
-// 1. AUTHENTICATION (Sign Up, Sign In, Profile, Sign Out)
-
-// Sign Up (Save new user with credentials and personal dashboard profile)
-app.post('/api/auth/signup', (req, res) => {
-    const { username, password, botName, ownerNumber, prefix } = req.body || {};
-    try {
-        const user = database.registerUser(username, password, 'user', {
-            botName,
-            botOwner: username,
-            ownerNumber,
-            prefix
-        });
-        const login = database.loginUser(username, password);
-        const userConfig = database.getUserConfig(login.user.id);
-        console.log(`[auth] 👤 New user registered: ${user.username} (ID: ${user.id})`);
-        res.json({
-            success: true,
-            message: `Account created successfully! Welcome, ${user.username}.`,
-            token: login.token,
-            expiresAt: login.expiresAt,
-            user: login.user,
-            userConfig
-        });
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
+// 1. AUTHENTICATION (GitHub OAuth 2.0 Exclusive — Manual Sign-In/Sign-Up Disabled)
+app.post(['/api/auth/signup', '/api/auth/signin', '/api/auth/login', '/api/auth/rehydrate'], (req, res) => {
+    return res.status(403).json({
+        success: false,
+        error: 'Manual login and manual account creation are strictly disabled. Please sign in with GitHub.'
+    });
 });
 
-// Sign In
-app.post('/api/auth/signin', (req, res) => {
-    const { username, password } = req.body || {};
-    if (!username || !password) {
-        return res.status(400).json({ error: 'Username and password are required' });
-    }
-
-    try {
-        const login = database.loginUser(username, password);
-        const userConfig = database.getUserConfig(login.user.id);
-        console.log(`[auth] 🔓 Successful sign in for user ID #${login.user.id} (Role: ${login.user.role})`);
-        res.json({
-            success: true,
-            message: `Welcome back, ${login.user.username}!`,
-            token: login.token,
-            expiresAt: login.expiresAt,
-            user: login.user,
-            userConfig
-        });
-    } catch (err) {
-        console.warn(`[auth] 🔒 Failed sign in attempt:`, err.message);
-        res.status(401).json({ error: 'Invalid username or password.' });
-    }
-});
-
-// Get Current User Profile, Isolated Config & Saved Sessions
+// Get Current User Profile, Isolated Config & Saved Sessions (Strictly requires GitHub OAuth session)
 app.get('/api/auth/me', (req, res) => {
     if (!req.user) {
         return res.json({ authenticated: false, user: null, userConfig: null, sessions: [] });
     }
-    const userSessions = database.getUserSessions(req.user.id);
     const userConfig = database.getUserConfig(req.user.id);
+    if (userConfig?.settings?.oauthProvider !== 'github') {
+        return res.json({ authenticated: false, user: null, userConfig: null, sessions: [] });
+    }
+    const userSessions = database.getUserSessions(req.user.id);
     res.json({
         authenticated: true,
-        user: req.user,
+        user: {
+            ...req.user,
+            provider: 'github',
+            displayName: userConfig?.settings?.displayName || req.user.username,
+            avatarUrl: userConfig?.settings?.avatarUrl || ''
+        },
         userConfig,
         sessions: userSessions
     });
@@ -296,36 +259,6 @@ app.post('/api/auth/signout', (req, res) => {
         database.logoutToken(token);
     }
     res.json({ success: true, message: 'Signed out successfully' });
-});
-
-// Zero-Logout Session Rehydration (Restores or re-issues permanent token across container restarts / backend switches)
-app.post('/api/auth/rehydrate', (req, res) => {
-    const { token, username, password, role } = req.body || {};
-    try {
-        if (username && password) {
-            const login = database.loginUser(username, password);
-            return res.json({
-                success: true,
-                rehydrated: true,
-                token: login.token,
-                expiresAt: login.expiresAt,
-                user: login.user
-            });
-        }
-        const restored = database.rehydrateOrEnsureUserSession({ token, username, role });
-        if (restored) {
-            return res.json({
-                success: true,
-                rehydrated: true,
-                token: restored.token,
-                expiresAt: restored.expiresAt,
-                user: restored.user
-            });
-        }
-        return res.status(404).json({ success: false, error: 'Could not rehydrate session' });
-    } catch (err) {
-        return res.status(400).json({ success: false, error: err.message });
-    }
 });
 
 // AI Studio Frontend <-> Railway Backend Bridge Config API
@@ -369,32 +302,8 @@ app.post('/api/config/bridge', (req, res) => {
     }
 });
 
-// Legacy login route
-app.post('/api/auth/login', (req, res) => {
-    const { passcode, password, username } = req.body || {};
-    const pwd = password || passcode;
-    if (!username || !pwd) {
-        return res.status(400).json({ success: false, error: 'Username and password are required.' });
-    }
-    try {
-        const login = database.loginUser(username, pwd);
-        const userConfig = database.getUserConfig(login.user.id);
-        res.json({
-            success: true,
-            message: 'Signed in successfully',
-            token: login.token,
-            user: login.user,
-            userConfig,
-            botName: userConfig.botName,
-            botOwner: userConfig.botOwner,
-        });
-    } catch (_) {
-        res.status(401).json({ success: false, error: 'Invalid username or password.' });
-    }
-});
-
 // ─────────────────────────────────────────────────────────────────────────────
-// 🌐 GOOGLE & GITHUB OAUTH 2.0 + INSTANT SOCIAL LOGIN ENGINE
+// 🌐 GITHUB OAUTH 2.0 EXCLUSIVE LOGIN ENGINE
 // ─────────────────────────────────────────────────────────────────────────────
 function resolveOAuthBaseOrigin(req) {
     const clientOrigin = String(req.query?.origin || req.body?.origin || '').trim().replace(/\/+$/, '');
@@ -552,35 +461,11 @@ app.get(['/auth/github/callback', '/auth/github/callback/', '/api/auth/github/ca
     }
 });
 
-// 4. Instant Social Sign-In Endpoint (Google & GitHub Identity Verification)
+// Disable manual social login bypass — only real GitHub OAuth 2.0 is permitted
 app.post('/api/auth/oauth/social-login', (req, res) => {
-    try {
-        const { provider, email, username, displayName, avatarUrl } = req.body || {};
-        const cleanProvider = String(provider || 'google').toLowerCase() === 'github' ? 'github' : 'google';
-        if (!email && !username) {
-            return res.status(400).json({ error: `Please enter your ${cleanProvider === 'github' ? 'GitHub username or email' : 'Google email address'} to continue.` });
-        }
-        const login = database.loginOrRegisterOAuthUser({
-            provider: cleanProvider,
-            email: String(email || '').trim(),
-            username: String(username || '').trim(),
-            displayName: String(displayName || '').trim(),
-            avatarUrl: String(avatarUrl || '').trim()
-        });
-        const userConfig = database.getUserConfig(login.user.id);
-        console.log(`[auth:${cleanProvider}] 🔓 Social sign-in succeeded for ${login.user.username} (${login.user.email})`);
-        return res.json({
-            success: true,
-            provider: cleanProvider,
-            message: `Signed in with ${cleanProvider === 'github' ? 'GitHub' : 'Google'} as ${login.user.displayName || login.user.username}!`,
-            token: login.token,
-            expiresAt: login.expiresAt,
-            user: login.user,
-            userConfig
-        });
-    } catch (err) {
-        return res.status(400).json({ error: err.message });
-    }
+    return res.status(403).json({
+        error: 'Manual login is disabled. Please click "Login with GitHub" to authenticate via GitHub OAuth.'
+    });
 });
 
 // Health Check

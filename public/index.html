@@ -2255,22 +2255,22 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
                 id="pairSubmitBtn" 
                 class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 text-slate-950 font-black text-sm tracking-wide shadow-lg transition active:scale-95 cursor-pointer"
               >
-                Request Pairing Code (ZAID-KHAN)
+                Request 8-Character Pairing Code
               </button>
             </form>
 
             <div id="pairStatusBox" class="hidden p-3 rounded-xl text-xs text-center font-medium"></div>
 
             <div id="pairingCodeDisplay" class="hidden p-4 rounded-2xl bg-slate-950 border border-emerald-500/40 text-center space-y-2.5 shadow-lg">
-              <div class="text-xs text-slate-400">Enter this custom pairing code on your WhatsApp phone:</div>
-              <div id="pairingCodeValue" class="text-3xl sm:text-4xl font-black text-emerald-400 font-mono tracking-widest py-1 select-all">ZAID-KHAN</div>
-              <p class="text-[11px] text-slate-400">Open WhatsApp &gt; Linked Devices &gt; Link with phone number instead</p>
+              <div class="text-xs text-slate-400">Enter this 8-character pairing code on your WhatsApp phone:</div>
+              <div id="pairingCodeValue" class="text-3xl sm:text-4xl font-black text-emerald-400 font-mono tracking-widest py-1 select-all">----</div>
+              <p class="text-[11px] text-slate-400">Tap the WhatsApp link notification or open WhatsApp &gt; Linked Devices &gt; Link with phone number instead</p>
               <button 
                 type="button" 
                 onclick="copyPairingCode()" 
-                class="px-4 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition inline-flex items-center gap-1.5"
+                class="px-4 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer"
               >
-                <span>📋 Copy Code (ZAID-KHAN)</span>
+                <span id="copyPairingBtnText">📋 Copy 8-Digit Code</span>
               </button>
             </div>
           </div>
@@ -6589,8 +6589,33 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
         if (res.ok && data.code) {
           display.classList.remove('hidden');
           codeVal.textContent = data.code;
+          const copyBtnText = document.getElementById('copyPairingBtnText');
+          if (copyBtnText) copyBtnText.textContent = `📋 Copy Code (${data.code})`;
           statusBox.className = 'p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-400 text-center font-medium';
-          statusBox.textContent = '✅ Pairing code generated! Link it on your WhatsApp mobile app now.';
+          statusBox.textContent = '✅ Pairing code generated! Enter it in your WhatsApp notification within 3 minutes.';
+
+          // Poll connection status every 3s for 2 minutes to auto-detect when phone completes linking
+          const cleanTarget = phoneNumber.replace(/\D/g, '').replace(/^00/, '').replace(/^0(?=\d{10}$)/, '92');
+          let pollCount = 0;
+          const pollTimer = setInterval(async () => {
+            pollCount++;
+            if (pollCount > 40) {
+              clearInterval(pollTimer);
+              return;
+            }
+            try {
+              const stRes = await fetch('/api/status');
+              const stData = await stRes.json();
+              const connectedList = Array.isArray(stData.connectedSessions) ? stData.connectedSessions : [];
+              if (connectedList.includes(cleanTarget) || connectedList.length > 0) {
+                clearInterval(pollTimer);
+                statusBox.className = 'p-3 rounded-xl bg-emerald-500/20 border border-emerald-400 text-xs text-emerald-300 text-center font-bold';
+                statusBox.textContent = `🎉 WhatsApp Device (+${cleanTarget}) Linked & Connected Successfully!`;
+                fetchMySessions();
+                fetchStatus();
+              }
+            } catch (_) {}
+          }, 3000);
         } else if (data.alreadyConnected) {
           statusBox.className = 'p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-400 text-center font-medium';
           statusBox.textContent = '✅ ' + (data.message || 'This WhatsApp number is already connected and active!');
@@ -6605,14 +6630,15 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
       } finally {
         submitBtn.disabled = false;
         submitBtn.classList.remove('opacity-60');
-        submitBtn.textContent = 'Request 8-Digit Pairing Code';
+        submitBtn.textContent = 'Request 8-Character Pairing Code';
       }
     }
 
     function copyPairingCode() {
-      const code = document.getElementById('pairingCodeValue')?.textContent?.trim() || '';
-      if (!code) return;
-      copyToClipboard(code, '8-Digit Pairing Code copied to clipboard!');
+      const raw = document.getElementById('pairingCodeValue')?.textContent?.trim() || '';
+      const clean = raw.replace(/[^A-Z0-9]/gi, '');
+      if (!clean) return;
+      copyToClipboard(clean, `Pairing code (${clean}) copied to clipboard!`);
     }
 
     // 2. ⚡ Session Activator Handler (< 50 words validated)
