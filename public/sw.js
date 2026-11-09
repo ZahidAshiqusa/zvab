@@ -1,69 +1,53 @@
 'use strict';
 
-const CACHE_NAME = 'urooj-choudhary-v1';
-const PRECACHE_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/assets/aistudio/file_00000000f0bc8208be82cd16e83afef8_ac51e6b8.png'
-];
+const CACHE_NAME = 'zaid-ashiq-v5-github-only';
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Pre-caching offline shell');
-      return cache.addAll(PRECACHE_ASSETS).catch((err) => {
-        console.warn('[SW] Cache addAll failed:', err);
-      });
-    }).then(() => self.skipWaiting())
+    caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            console.log('[SW] Removing old cache:', key);
-            return caches.delete(key);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    caches.keys()
+      .then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+      .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: 'window' }))
+      .then((windowClients) => {
+        for (const client of windowClients) {
+          try {
+            client.navigate(client.url);
+          } catch (_) {}
+        }
+      })
   );
 });
 
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  const req = event.request;
+  const url = new URL(req.url);
 
-  // Network-only for API requests
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(fetch(event.request));
+  // Always bypass cache (Network-Only) for HTML navigation, login, OAuth, and API routes
+  if (
+    req.mode === 'navigate' ||
+    url.pathname === '/' ||
+    url.pathname === '/index.html' ||
+    url.pathname === '/login' ||
+    url.pathname === '/login.html' ||
+    url.pathname === '/sw.js' ||
+    url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/auth/')
+  ) {
+    event.respondWith(
+      fetch(req, { cache: 'no-store' }).catch(() => fetch(req))
+    );
     return;
   }
 
-  // Cache-first, falling back to network for app shell and assets
+  // Network-first for all other static assets
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-          return networkResponse;
-        }
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-        return networkResponse;
-      }).catch(() => {
-        // Fallback to cached index.html for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match('/');
-        }
-      });
-    })
+    fetch(req).catch(() => caches.match(req))
   );
 });

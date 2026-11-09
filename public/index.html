@@ -14,6 +14,49 @@
   <meta name="apple-mobile-web-app-title" content="Zaid Ashiq X Ultra V. Coder" />
   <link rel="icon" type="image/png" href="/assets/aistudio/file_00000000f0bc8208be82cd16e83afef8_ac51e6b8.png" />
 
+  <!-- Immediate Cache Buster & GitHub Startup Auth Redirect Guard -->
+  <script>
+    (function() {
+      try {
+        if ('caches' in window) {
+          caches.keys().then(function(keys) {
+            keys.forEach(function(k) { caches.delete(k); });
+          });
+        }
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(regs) {
+            regs.forEach(function(r) { r.update(); });
+          });
+        }
+      } catch (_) {}
+
+      var params = new URLSearchParams(window.location.search);
+      var urlToken = params.get('auth_token');
+      if (urlToken) {
+        try {
+          localStorage.setItem('urooj_auth_token', urlToken);
+          window.history.replaceState({}, document.title, '/');
+        } catch (_) {}
+        return;
+      }
+
+      var savedToken = null;
+      var savedUser = null;
+      try {
+        savedToken = localStorage.getItem('urooj_auth_token');
+        savedUser = JSON.parse(localStorage.getItem('urooj_user') || 'null');
+      } catch (_) {}
+
+      if (!savedToken || (savedUser && savedUser.provider && savedUser.provider !== 'github')) {
+        try {
+          localStorage.removeItem('urooj_auth_token');
+          localStorage.removeItem('urooj_user');
+        } catch (_) {}
+        window.location.replace('/login');
+      }
+    })();
+  </script>
+
   <!-- Tailwind CSS via CDN for full styling & responsiveness -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -5003,33 +5046,8 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
     ];
 
     // ──────────────────────────────────────────────────────────────────────────
-    // AUTHENTICATION & DEVICE-BOUND ISOLATION ENGINE
+    // AUTHENTICATION & DEVICE-BOUND ISOLATION ENGINE (GITHUB OAUTH ONLY)
     // ──────────────────────────────────────────────────────────────────────────
-    function setAuthMode(mode) {
-      const signInForm = document.getElementById('signInForm');
-      const signUpForm = document.getElementById('signUpForm');
-      const tabSignIn = document.getElementById('authTabBtn-signin');
-      const tabSignUp = document.getElementById('authTabBtn-signup');
-      const alertBox = document.getElementById('authAlertBox');
-      alertBox.classList.add('hidden');
-
-      if (mode === 'signin') {
-        signInForm.classList.remove('hidden');
-        signUpForm.classList.add('hidden');
-        tabSignIn.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition bg-amber-500 text-slate-950 shadow';
-        tabSignUp.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-slate-200';
-      } else {
-        signInForm.classList.add('hidden');
-        signUpForm.classList.remove('hidden');
-        tabSignUp.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition bg-emerald-500 text-slate-950 shadow';
-        tabSignIn.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-slate-200';
-      }
-    }
-
-    function togglePasswordInput(id) {
-      const input = document.getElementById(id);
-      if (input) input.type = input.type === 'password' ? 'text' : 'password';
-    }
 
     // Zero-Logout Permanent Session + Auto-Rehydration Engine
     async function initBridgeConfig() {

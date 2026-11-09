@@ -80,22 +80,40 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Prevent any browser/proxy/SW caching of HTML entry points or sw.js
+app.use((req, res, next) => {
+    if (
+        req.path === '/' ||
+        req.path === '/index.html' ||
+        req.path === '/login' ||
+        req.path === '/login/' ||
+        req.path === '/login.html' ||
+        req.path === '/sw.js'
+    ) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.setHeader('Surrogate-Control', 'no-store');
+    }
+    next();
+});
+
 // Dedicated Separate Login Page Route (/login) & Root OAuth Code Interceptor
-app.get(['/login', '/login/'], (req, res) => {
+app.get(['/login', '/login/', '/login.html'], (req, res) => {
     if (req.query && req.query.code) {
         return res.redirect(`/auth/github/callback?code=${encodeURIComponent(String(req.query.code))}`);
     }
     return res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-app.get('/', (req, res, next) => {
+app.get(['/', '/index.html'], (req, res, next) => {
     if (req.query && req.query.code) {
         return res.redirect(`/auth/github/callback?code=${encodeURIComponent(String(req.query.code))}`);
     }
     return next();
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), { etag: false, lastModified: false }));
 
 // Safe loaders
 let pluginLoader = null;
