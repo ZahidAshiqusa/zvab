@@ -1973,6 +1973,37 @@ app.get('/api/sim-db/status', async (req, res) => {
     }
 });
 
+// Proxy endpoints for Dual API Integration (SIM Database 03... & Truecaller 923...)
+app.get('/api/sim-db/proxy-sim', async (req, res) => {
+    try {
+        const axios = require('axios');
+        const query = String(req.query.query || '').trim();
+        if (!query) return res.status(400).json({ success: false, data: [] });
+        const response = await axios.get(`https://sim-databases.vercel.app/api/search?query=${encodeURIComponent(query)}`, {
+            timeout: 12000,
+            headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' }
+        });
+        return res.json(response.data);
+    } catch (err) {
+        return res.status(200).json({ success: false, data: [] });
+    }
+});
+
+app.get('/api/sim-db/proxy-truecaller', async (req, res) => {
+    try {
+        const axios = require('axios');
+        const search = String(req.query.search || '').trim();
+        if (!search) return res.status(400).json({ status: false, data: null });
+        const response = await axios.get(`https://truecaller-chi-eight.vercel.app/api/search?search=${encodeURIComponent(search)}`, {
+            timeout: 12000,
+            headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' }
+        });
+        return res.json(response.data);
+    } catch (err) {
+        return res.status(200).json({ status: false, data: null });
+    }
+});
+
 app.get('/api/sim-db/lookup', async (req, res) => {
     try {
         const q = String(req.query.q || req.query.query || '').trim();

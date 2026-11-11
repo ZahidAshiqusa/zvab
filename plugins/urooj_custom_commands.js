@@ -77,24 +77,27 @@ function extractRawText(message) {
     if (m.documentWithCaptionMessage?.message) m = m.documentWithCaptionMessage.message;
 
     let interactiveText =
+        m.buttonsResponseMessage?.selectedButtonId ||
         m.buttonsResponseMessage?.selectedDisplayText ||
+        m.templateButtonReplyMessage?.selectedId ||
         m.templateButtonReplyMessage?.selectedDisplayText ||
+        m.listResponseMessage?.singleSelectReply?.selectedRowId ||
         m.listResponseMessage?.title ||
         '';
 
     if (m.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson) {
         try {
             const params = JSON.parse(m.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson);
-            interactiveText = params.display_text || params.id || interactiveText;
+            interactiveText = params.id || params.display_text || interactiveText;
         } catch (_) {}
     }
 
     return (
+        interactiveText ||
         m.conversation ||
         m.extendedTextMessage?.text ||
         m.imageMessage?.caption ||
         m.videoMessage?.caption ||
-        interactiveText ||
         ''
     ).trim();
 }

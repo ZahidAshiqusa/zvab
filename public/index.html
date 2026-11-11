@@ -971,38 +971,36 @@
         </button>
         <span class="text-[11px] font-mono text-slate-400 hidden sm:inline">Zaid Ashiq X Ultra V. Coder Suite</span>
       </div>
-      <!-- Main Clean SIM & CNIC Details Card -->
+      <!-- Regenerated SIM Data Tab: Dual API (SIM Database + Truecaller) -->
       <div class="max-w-4xl mx-auto space-y-6">
         <div class="p-6 sm:p-8 rounded-3xl bg-slate-900/85 border border-cyan-500/30 shadow-2xl space-y-6">
-          <!-- Clean Header with Developer Details -->
+          <!-- Header -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
             <div class="flex items-center gap-3.5">
               <div class="w-13 h-13 rounded-2xl bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 flex items-center justify-center text-3xl shadow-lg shrink-0">
                 🪪
               </div>
               <div>
-                <h2 class="text-xl sm:text-2xl font-black text-white">SIM &amp; CNIC Details</h2>
-                <p class="text-xs text-slate-400 mt-0.5">Live On-Demand Mobile Number &amp; CNIC Verification</p>
+                <h2 class="text-xl sm:text-2xl font-black text-white">SIM Data Lookup</h2>
+                <p class="text-xs text-slate-400 mt-0.5">Simultaneous Dual-Engine Search (SIM Database + Truecaller)</p>
               </div>
             </div>
-
-            <div class="text-left sm:text-right">
-              <div class="text-xs font-mono font-bold text-slate-300">DEVELOPER: Zaid Ashiq X Ultra V. Coder | WHATSAPP: +254141693915</div>
-              <div class="text-[11px] font-mono text-amber-300">ᶻᵃⁱᵈ ᴬˢʰⁱզ ˣ ᵁˡᵗʳᵃ ᵛ. ᶜᵒᵈᵉʳ</div>
+            <div class="flex items-center gap-2">
+              <span id="simDbResultSourceBadge" class="px-3 py-1 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-bold">READY</span>
             </div>
           </div>
 
           <!-- Toast Alert -->
           <div id="simDbToastBox" class="hidden p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-xs text-emerald-200 font-medium"></div>
 
-          <!-- Single Clean Input & "Get Details" Button -->
-          <form onsubmit="runSimDbLookup(event)" class="space-y-4">
+          <!-- Single Search Input Field -->
+          <form onsubmit="runSimDbLookup(event)" class="space-y-3">
             <div class="flex flex-col sm:flex-row gap-2.5">
               <input
                 type="text"
                 id="simDbSearchInput"
                 required
-                placeholder="Enter Mobile Number (03... / +92...) or 13-Digit CNIC..."
+                placeholder="Enter Mobile Number (e.g. 03001234567, 923001234567, +923001234567)..."
                 class="flex-1 px-4 py-3.5 rounded-xl bg-slate-950 border border-slate-700 text-sm font-mono text-white placeholder-slate-500 outline-none focus:border-cyan-400 transition"
               />
               <button
@@ -1010,163 +1008,60 @@
                 id="simDbSearchBtn"
                 class="px-7 py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-black text-sm shadow-lg shadow-cyan-500/20 transition cursor-pointer shrink-0 flex items-center justify-center gap-2"
               >
-                <span>🔍</span>
-                <span>Get Details</span>
+                <span id="simDbSearchBtnIcon">🔍</span>
+                <span id="simDbSearchBtnText">Search SIM Data</span>
               </button>
+            </div>
+            <div id="simFormattedTargetsBar" class="hidden flex flex-wrap items-center gap-3 text-[11px] font-mono text-slate-400 px-1">
+              <span>SIM DB Query: <strong id="simQuery03Badge" class="text-cyan-300">-</strong></span>
+              <span>•</span>
+              <span>Truecaller Query: <strong id="simQuery923Badge" class="text-emerald-300">-</strong></span>
             </div>
           </form>
 
-          <!-- Result Section: HD Image Card & Text with Copy Button -->
-          <div id="simDbResultWrapper" class="p-5 rounded-2xl bg-slate-950/90 border border-cyan-500/30 space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span id="simDbResultTitle" class="text-sm font-black text-white">🪪 Person &amp; CNIC Details Result</span>
-                <span id="simDbResultSourceBadge" class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono text-[10px] font-bold">READY</span>
-              </div>
-              
-              <!-- View Mode Toggles & Action Buttons -->
-              <div class="flex items-center gap-2 flex-wrap">
-                <div class="flex items-center bg-slate-900 rounded-xl p-0.5 border border-slate-800 text-xs">
-                  <button
-                    type="button"
-                    id="simTabBtnCard"
-                    onclick="setSimResultViewMode('card')"
-                    class="px-2.5 py-1 rounded-lg bg-cyan-500 text-slate-950 font-bold transition cursor-pointer"
-                  >
-                    🖼️ HD Card
-                  </button>
-                  <button
-                    type="button"
-                    id="simTabBtnText"
-                    onclick="setSimResultViewMode('text')"
-                    class="px-2.5 py-1 rounded-lg text-slate-300 hover:text-white font-medium transition cursor-pointer"
-                  >
-                    📄 Text &amp; Copy
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onclick="downloadSimHdCard()"
-                  class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-400 to-teal-400 hover:from-cyan-300 hover:to-teal-300 text-slate-950 font-black text-xs shadow transition cursor-pointer flex items-center gap-1.5"
-                  title="Download 2x High-Definition PNG Image Card"
-                >
-                  <span>📥 Download HD PNG</span>
-                </button>
-                <button
-                  type="button"
-                  onclick="copySimDbResultText('full')"
-                  class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow transition cursor-pointer flex items-center gap-1.5"
-                >
-                  <span>📋 Copy All</span>
-                </button>
-              </div>
+          <!-- Loading State -->
+          <div id="simDualLoadingBox" class="hidden p-8 rounded-2xl bg-slate-950/90 border border-slate-800 text-center space-y-3">
+            <div class="inline-block w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-xs font-mono text-cyan-300">Fetching live records simultaneously from SIM Database &amp; Truecaller...</p>
+          </div>
+
+          <!-- Master Copy Bar (Shown when results exist) -->
+          <div id="simMasterActionHeader" class="hidden flex items-center justify-between bg-slate-950/80 border border-slate-800/90 px-4 py-3 rounded-xl">
+            <span id="simDbResultTitle" class="text-xs font-mono font-bold text-slate-300">Verified Subscriber Records</span>
+            <button
+              type="button"
+              id="simMasterCopyBtn"
+              onclick="copyCleanSimData('all', this)"
+              class="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow transition cursor-pointer flex items-center gap-1.5"
+            >
+              <span>📋</span>
+              <span>Copy All Data</span>
+            </button>
+          </div>
+
+          <!-- Dynamic Conditional Results Wrapper -->
+          <div id="simDynamicResultsContainer" class="space-y-6">
+            <!-- Initial Idle State -->
+            <div id="simIdlePromptBox" class="p-8 rounded-2xl bg-slate-950/70 border border-slate-800/80 text-center space-y-2">
+              <span class="text-3xl block">📲</span>
+              <p class="text-sm font-bold text-slate-200">Enter a mobile number above to search</p>
+              <p class="text-xs text-slate-400 font-mono">Automatically formats to 03XXXXXXXXX (SIM Database) &amp; 923XXXXXXXXX (Truecaller)</p>
             </div>
 
-            <!-- VIEW 1: HD Image Card Live Preview (Rendered in 2x Retina Canvas) -->
-            <div id="simResultCardContainer" class="space-y-3">
-              <div class="relative group rounded-2xl overflow-hidden border border-slate-800 bg-slate-900/60 shadow-2xl flex items-center justify-center p-2">
-                <canvas id="simHdCanvas" class="hidden"></canvas>
-                <img
-                  id="simHdCardImgPreview"
-                  src=""
-                  alt="SIM Details HD Card"
-                  class="w-full max-w-2xl h-auto rounded-xl shadow-lg border border-cyan-500/30 object-contain transition group-hover:scale-[1.01]"
-                />
-                <div id="simHdCardPlaceholder" class="py-16 text-center text-slate-400 space-y-2">
-                  <span class="text-4xl block">🖼️</span>
-                  <p class="text-xs font-mono">Enter any mobile number or CNIC above and click "Get Details".</p>
-                  <div class="text-[11px] font-mono text-slate-400">DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915</div>
-                  <span class="text-[11px] font-mono text-amber-300">ᵁʳᵒᵒʲ ᶜʰᵒᵘᵈʰᵃʳʸ ˣ ᴹʳ. ᵁⁿᵏᵒʷⁿ</span>
-                </div>
-              </div>
+            <!-- Section 1: SIM Database Section (Hidden unless SIM DB returns valid records) -->
+            <div id="simDbSectionContainer" class="hidden space-y-4"></div>
 
-              <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
-                <span class="flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-                  <span>Sharp 2x Retina PNG with operator badge &amp; developer watermark</span>
-                </span>
-                <button
-                  type="button"
-                  onclick="downloadSimHdCard()"
-                  class="text-cyan-400 hover:text-cyan-300 font-bold underline cursor-pointer"
-                >
-                  Save as Image &darr;
-                </button>
-              </div>
-            </div>
+            <!-- Divider Line (Shown ONLY in Case A when BOTH APIs succeed) -->
+            <hr id="simTruecallerDivider" class="hidden border-t border-slate-700/80 my-6" />
 
-            <!-- VIEW 2: Structured Details & Individual Copy Badges -->
-            <div id="simResultTextContainer" class="hidden space-y-4">
-              <!-- Field Badges with 1-Click Copy Buttons -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs font-mono">
-                <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
-                  <div class="truncate mr-2">
-                    <span class="text-slate-400 block text-[10px]">📞 NUMBER</span>
-                    <span id="fieldValPhone" class="text-cyan-300 font-bold truncate">-</span>
-                  </div>
-                  <button type="button" onclick="copySpecificField('fieldValPhone', 'Mobile Number')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold cursor-pointer shrink-0">📋 Copy</button>
-                </div>
-                <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
-                  <div class="truncate mr-2">
-                    <span class="text-slate-400 block text-[10px]">🪪 CNIC</span>
-                    <span id="fieldValCnic" class="text-emerald-300 font-bold truncate">-</span>
-                  </div>
-                  <button type="button" onclick="copySpecificField('fieldValCnic', 'CNIC Number')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold cursor-pointer shrink-0">📋 Copy</button>
-                </div>
-                <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
-                  <div class="truncate mr-2">
-                    <span class="text-slate-400 block text-[10px]">👤 SUBSCRIBER NAME</span>
-                    <span id="fieldValName" class="text-white font-bold truncate">-</span>
-                  </div>
-                  <button type="button" onclick="copySpecificField('fieldValName', 'Subscriber Name')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold cursor-pointer shrink-0">📋 Copy</button>
-                </div>
-                <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
-                  <div class="truncate mr-2">
-                    <span class="text-slate-400 block text-[10px]">📶 OPERATOR &amp; CITY</span>
-                    <span id="fieldValOperator" class="text-amber-300 font-bold truncate">-</span>
-                  </div>
-                  <button type="button" onclick="copySpecificField('fieldValOperator', 'Operator / City')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold cursor-pointer shrink-0">📋 Copy</button>
-                </div>
-                <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 sm:col-span-2 flex items-center justify-between">
-                  <div class="truncate mr-2">
-                    <span class="text-slate-400 block text-[10px]">📍 FULL ADDRESS</span>
-                    <span id="fieldValAddress" class="text-slate-200 font-medium truncate">-</span>
-                  </div>
-                  <button type="button" onclick="copySpecificField('fieldValAddress', 'Full Address')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold cursor-pointer shrink-0">📋 Copy</button>
-                </div>
-              </div>
+            <!-- Section 2: Truecaller Section (Hidden unless Truecaller returns valid data) -->
+            <div id="truecallerSectionContainer" class="hidden space-y-4"></div>
 
-              <!-- Complete Text Box with Copy Button -->
-              <pre id="simDbFormattedOutput" class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-mono text-slate-100 whitespace-pre-wrap leading-relaxed overflow-x-auto">Enter CNIC or Mobile Number above to get details.
-
-DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
-ᵁʳᵒᵒʲ ᶜʰᵒᵘᵈʰᵃʳʸ ˣ ᴹʳ. ᵁⁿᵏᵒʷⁿ</pre>
-            </div>
-
-            <!-- Send Result to WhatsApp with Interactive Copy Button & HD Card Image -->
-            <div class="pt-2 border-t border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-              <input
-                type="text"
-                id="simDbWhatsappRecipient"
-                value="254141693915"
-                placeholder="WhatsApp Recipient (e.g. 254141693915 or 923001234567)"
-                class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-white outline-none focus:border-emerald-500"
-              />
-              <button
-                type="button"
-                onclick="sendSimDbHdCardToWhatsApp()"
-                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs transition cursor-pointer shrink-0 shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-1.5"
-                title="Dispatches both the HD Image Card and interactive WhatsApp Copy button"
-              >
-                <span>📲 Send to WhatsApp</span>
-              </button>
-              <button
-                type="button"
-                onclick="sendSimDbResultToWhatsApp()"
-                class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer shrink-0"
-              >
-                💬 Text Only
-              </button>
+            <!-- Case D: Clean "No record found" message (Shown ONLY when BOTH APIs fail/empty) -->
+            <div id="simNoRecordBox" class="hidden p-8 rounded-2xl bg-slate-950/90 border border-rose-500/30 text-center space-y-2">
+              <span class="text-3xl block">🔍</span>
+              <p class="text-base font-black text-white">No record found</p>
+              <p class="text-xs text-slate-400 font-mono">No subscriber records were returned for this number.</p>
             </div>
           </div>
         </div>
@@ -9323,80 +9218,445 @@ DEVELOPER: Mr. Unkown | WHATSAPP: +254141693915
       }
     }
 
+    // Store sanitized copyable strings by key
+    let cleanSimCopyStore = {
+      all: '',
+      simCards: [],
+      truecallerCard: ''
+    };
+
+    // Format input number for Dual APIs:
+    // API 1 (SIM Database): starts with 03 (e.g. 03001234567)
+    // API 2 (Truecaller): starts with 923 without + (e.g. 923001234567)
+    function formatDualSimInput(rawInput) {
+      const digits = String(rawInput || '').replace(/\D+/g, '');
+      if (!digits) return { query03: '', query923: '' };
+
+      // If 13-digit CNIC (starts with 1-8 and 13 digits long)
+      if (digits.length === 13 && !digits.startsWith('92') && !digits.startsWith('0092')) {
+        return { query03: digits, query923: digits };
+      }
+
+      let core10 = digits;
+      if (digits.startsWith('0092') && digits.length >= 14) {
+        core10 = digits.slice(4);
+      } else if (digits.startsWith('92') && digits.length >= 12) {
+        core10 = digits.slice(2);
+      } else if (digits.startsWith('0') && digits.length >= 11) {
+        core10 = digits.slice(1);
+      }
+
+      // If it starts with 3 (Pakistani mobile core e.g. 3001234567)
+      if (core10.startsWith('3')) {
+        return {
+          query03: '0' + core10,
+          query923: '92' + core10
+        };
+      }
+
+      // Fallback for other numbers
+      const q03 = digits.startsWith('03') ? digits : (digits.startsWith('923') ? '0' + digits.slice(2) : digits);
+      const q923 = digits.startsWith('923') ? digits : (digits.startsWith('03') ? '92' + digits.slice(1) : digits);
+      return { query03: q03, query923: q923 };
+    }
+
+    // Strict Sanitizer: Strips WhatsApp channel links, URLs, developer credits, and promotional metadata
+    const BLOCKED_PROMO_KEYS = new Set([
+      'developer', 'team', 'channel', 'branding', 'credit', 'credits', 'owner',
+      'author', 'support', 'telegram', 'whatsapp', 'url', 'link', 'website',
+      'source_url', 'api_owner', 'powered_by', 'status', 'success', 'timestamp',
+      'version', 'count', 'query', 'error', 'message', 'code'
+    ]);
+
+    function isPromotionalOrInvalidValue(val) {
+      if (val === null || val === undefined) return true;
+      const str = String(val).trim();
+      if (!str || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined' || str.toLowerCase() === 'n/a' || str.toLowerCase() === 'none') {
+        return true;
+      }
+      const lower = str.toLowerCase();
+      if (
+        lower.includes('whatsapp.com/channel') ||
+        lower.includes('chat.whatsapp.com') ||
+        lower.includes('http://') ||
+        lower.includes('https://') ||
+        lower.includes('www.') ||
+        lower.includes('t.me/') ||
+        str.includes('𝙿𝙰𝚁𝙸') ||
+        str.includes('𝙿𝚁𝙾𝙵𝙴𝚂𝚂𝙾𝚁') ||
+        str.includes('𝙴𝚁𝙰') ||
+        str.includes('𝙵𝙰𝙼𝙸𝙻𝚈') ||
+        str.includes('𝚃𝚁𝚄𝙴𝙲𝙰𝙻𝙻𝙴𝚁') ||
+        lower.includes('join channel') ||
+        lower.includes('developer')
+      ) {
+        return true;
+      }
+      return false;
+    }
+
+    function formatFieldLabel(key) {
+      const cleanKey = String(key || '').replace(/[_-]+/g, ' ').trim();
+      const upperMap = {
+        cnic: 'CNIC',
+        sim: 'SIM',
+        id: 'ID',
+        ip: 'IP',
+        dob: 'DOB',
+        imsi: 'IMSI',
+        imei: 'IMEI'
+      };
+      return cleanKey
+        .split(/\s+/)
+        .map(w => upperMap[w.toLowerCase()] || (w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()))
+        .join(' ');
+    }
+
+    // Extract clean Key-Value pairs from a subscriber record object
+    function extractCleanKeyValuePairs(recordObj) {
+      if (!recordObj || typeof recordObj !== 'object') return [];
+      const pairs = [];
+      const preferredOrder = ['name', 'mobile', 'number', 'phone', 'cnic', 'sim', 'operator', 'network', 'carrier', 'city', 'location', 'country', 'gender', 'email', 'address'];
+      const keys = Object.keys(recordObj).sort((a, b) => {
+        const ia = preferredOrder.indexOf(a.toLowerCase());
+        const ib = preferredOrder.indexOf(b.toLowerCase());
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+        return a.localeCompare(b);
+      });
+
+      for (const rawKey of keys) {
+        const lowerKey = rawKey.toLowerCase().trim();
+        if (BLOCKED_PROMO_KEYS.has(lowerKey)) continue;
+        const val = recordObj[rawKey];
+        if (typeof val === 'object' && val !== null) continue;
+        if (isPromotionalOrInvalidValue(val)) continue;
+        pairs.push({
+          key: formatFieldLabel(rawKey),
+          value: String(val).trim()
+        });
+      }
+      return pairs;
+    }
+
+    // Parse and sanitize API 1 (SIM Database) response
+    function parseSimDatabasePayload(payload) {
+      if (!payload || typeof payload !== 'object') return [];
+      let rawList = [];
+      if (Array.isArray(payload.data)) {
+        rawList = payload.data;
+      } else if (Array.isArray(payload.results)) {
+        rawList = payload.results;
+      } else if (Array.isArray(payload.records)) {
+        rawList = payload.records;
+      } else if (payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data)) {
+        if (Array.isArray(payload.data.data)) {
+          rawList = payload.data.data;
+        } else {
+          rawList = [payload.data];
+        }
+      } else if (Array.isArray(payload)) {
+        rawList = payload;
+      }
+
+      const validRecords = [];
+      for (const item of rawList) {
+        const pairs = extractCleanKeyValuePairs(item);
+        if (pairs.length > 0) {
+          validRecords.push(pairs);
+        }
+      }
+      return validRecords;
+    }
+
+    // Parse and sanitize API 2 (Truecaller) response
+    function parseTruecallerPayload(payload) {
+      if (!payload || typeof payload !== 'object') return [];
+      // Truecaller response often nests subscriber object inside payload.data.data or payload.data
+      let targetObj = null;
+      if (payload.data && typeof payload.data === 'object') {
+        if (payload.data.status === 'error' || payload.data.success === false) {
+          return [];
+        }
+        if (payload.data.data && typeof payload.data.data === 'object' && !Array.isArray(payload.data.data)) {
+          targetObj = payload.data.data;
+        } else if (!Array.isArray(payload.data)) {
+          targetObj = payload.data;
+        }
+      } else if (!Array.isArray(payload)) {
+        targetObj = payload;
+      }
+
+      if (!targetObj) return [];
+      const pairs = extractCleanKeyValuePairs(targetObj);
+      // If only "SIM: Unknown SIM" came back without a name or any other subscriber field, treat as empty/no valid record
+      const hasMeaningfulField = pairs.some(p => {
+        const k = p.key.toLowerCase();
+        const v = p.value.toLowerCase();
+        if (k === 'sim' && (v === 'unknown sim' || v === 'unknown')) return false;
+        return true;
+      });
+      return hasMeaningfulField ? pairs : [];
+    }
+
+    function escapeSimHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Fetch helper for API 1: tries direct https://sim-databases.vercel.app/api/search?query=... then CORS-safe backend proxy
+    async function fetchSimDatabaseApi(query03) {
+      const directUrl = `https://sim-databases.vercel.app/api/search?query=${encodeURIComponent(query03)}`;
+      try {
+        const res = await fetch(directUrl, { method: 'GET', headers: { 'Accept': 'application/json' } });
+        if (res.ok) {
+          return await res.json();
+        }
+      } catch (_) {
+        // Fallback to server proxy if browser CORS blocks direct call
+      }
+      const proxyRes = await fetch(`/api/sim-db/proxy-sim?query=${encodeURIComponent(query03)}`);
+      if (!proxyRes.ok) throw new Error('SIM Database request failed');
+      return await proxyRes.json();
+    }
+
+    // Fetch helper for API 2: tries direct https://truecaller-chi-eight.vercel.app/api/search?search=... then CORS-safe backend proxy
+    async function fetchTruecallerApi(query923) {
+      const directUrl = `https://truecaller-chi-eight.vercel.app/api/search?search=${encodeURIComponent(query923)}`;
+      try {
+        const res = await fetch(directUrl, { method: 'GET', headers: { 'Accept': 'application/json' } });
+        if (res.ok) {
+          return await res.json();
+        }
+      } catch (_) {
+        // Fallback to server proxy if browser CORS blocks direct call
+      }
+      const proxyRes = await fetch(`/api/sim-db/proxy-truecaller?search=${encodeURIComponent(query923)}`);
+      if (!proxyRes.ok) throw new Error('Truecaller request failed');
+      return await proxyRes.json();
+    }
+
+    // Copy Clean Data with "Copied!" feedback state
+    function copyCleanSimData(type, btnEl, index = 0) {
+      let textToCopy = '';
+      if (type === 'sim') {
+        textToCopy = cleanSimCopyStore.simCards[index] || '';
+      } else if (type === 'truecaller') {
+        textToCopy = cleanSimCopyStore.truecallerCard || '';
+      } else {
+        textToCopy = cleanSimCopyStore.all || '';
+      }
+
+      if (!textToCopy) return;
+
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        if (btnEl) {
+          const originalHtml = btnEl.getAttribute('data-orig-html') || btnEl.innerHTML;
+          if (!btnEl.getAttribute('data-orig-html')) {
+            btnEl.setAttribute('data-orig-html', originalHtml);
+          }
+          btnEl.innerHTML = '<span>✅</span><span>Copied!</span>';
+          btnEl.classList.add('ring-2', 'ring-emerald-300');
+          setTimeout(() => {
+            btnEl.innerHTML = originalHtml;
+            btnEl.classList.remove('ring-2', 'ring-emerald-300');
+          }, 1800);
+        }
+        showSimDbToast('Copied clean subscriber data to clipboard!');
+      }).catch(() => {
+        showSimDbToast('Failed to copy to clipboard', true);
+      });
+    }
+
+    // Main Dual API Search Handler using Promise.allSettled
     async function runSimDbLookup(e) {
       if (e && e.preventDefault) e.preventDefault();
       const input = document.getElementById('simDbSearchInput');
-      const outPre = document.getElementById('simDbFormattedOutput');
       const srcBadge = document.getElementById('simDbResultSourceBadge');
-      const titleEl = document.getElementById('simDbResultTitle');
-      const query = (input?.value || '').trim();
-      if (!query) {
-        showSimDbToast('Please enter a mobile number starting with 03 / +92 or a 13-digit CNIC starting with 1-5.', true);
+      const searchBtn = document.getElementById('simDbSearchBtn');
+      const searchBtnText = document.getElementById('simDbSearchBtnText');
+      const loadingBox = document.getElementById('simDualLoadingBox');
+      const idleBox = document.getElementById('simIdlePromptBox');
+      const simSection = document.getElementById('simDbSectionContainer');
+      const tcSection = document.getElementById('truecallerSectionContainer');
+      const divider = document.getElementById('simTruecallerDivider');
+      const noRecordBox = document.getElementById('simNoRecordBox');
+      const masterHeader = document.getElementById('simMasterActionHeader');
+      const targetsBar = document.getElementById('simFormattedTargetsBar');
+      const q03Badge = document.getElementById('simQuery03Badge');
+      const q923Badge = document.getElementById('simQuery923Badge');
+
+      const rawQuery = (input?.value || '').trim();
+      const { query03, query923 } = formatDualSimInput(rawQuery);
+
+      if (!query03 || query03.length < 7) {
+        showSimDbToast('Please enter a valid phone number (e.g. 03001234567 or +923001234567).', true);
         return;
       }
 
+      // Show formatted query badges
+      if (targetsBar) targetsBar.classList.remove('hidden');
+      if (q03Badge) q03Badge.textContent = query03;
+      if (q923Badge) q923Badge.textContent = query923;
+
+      // Reset UI containers before search
+      if (idleBox) idleBox.classList.add('hidden');
+      if (simSection) {
+        simSection.classList.add('hidden');
+        simSection.innerHTML = '';
+      }
+      if (tcSection) {
+        tcSection.classList.add('hidden');
+        tcSection.innerHTML = '';
+      }
+      if (divider) divider.classList.add('hidden');
+      if (noRecordBox) noRecordBox.classList.add('hidden');
+      if (masterHeader) masterHeader.classList.add('hidden');
+      if (loadingBox) loadingBox.classList.remove('hidden');
+
       if (srcBadge) srcBadge.textContent = 'SEARCHING...';
+      if (searchBtn) searchBtn.disabled = true;
+      if (searchBtnText) searchBtnText.textContent = 'Searching...';
+
+      cleanSimCopyStore = { all: '', simCards: [], truecallerCard: '' };
 
       try {
-        const res = await fetch('/api/sim-db/lookup?q=' + encodeURIComponent(query));
-        const data = await res.json();
-        lastSimDbLookupResult = data;
+        // Simultaneous fetch from API 1 (SIM Database with 03...) and API 2 (Truecaller with 923...)
+        const [simSettled, tcSettled] = await Promise.allSettled([
+          fetchSimDatabaseApi(query03),
+          fetchTruecallerApi(query923)
+        ]);
 
-        if (!data.ok) {
-          if (outPre) outPre.textContent = `${data.error || 'No records found'}\n\n${SIM_TINY_CAPTION}`;
-          if (srcBadge) srcBadge.textContent = 'NOT FOUND';
-          showSimDbToast(data.error || 'No SIM/CNIC records found', true);
+        const simRecords = simSettled.status === 'fulfilled'
+          ? parseSimDatabasePayload(simSettled.value)
+          : [];
+
+        const tcPairs = tcSettled.status === 'fulfilled'
+          ? parseTruecallerPayload(tcSettled.value)
+          : [];
+
+        const hasSimData = simRecords.length > 0;
+        const hasTcData = tcPairs.length > 0;
+
+        if (loadingBox) loadingBox.classList.add('hidden');
+
+        // Case D: Both fail or return empty
+        if (!hasSimData && !hasTcData) {
+          if (noRecordBox) noRecordBox.classList.remove('hidden');
+          if (srcBadge) srcBadge.textContent = 'NO RECORD';
           return;
         }
 
-        const primary = data.primaryRecord || data.records?.[0] || {};
-        
-        // Update Structured Field Badges
-        const elPhone = document.getElementById('fieldValPhone');
-        const elCnic = document.getElementById('fieldValCnic');
-        const elName = document.getElementById('fieldValName');
-        const elOperator = document.getElementById('fieldValOperator');
-        const elAddress = document.getElementById('fieldValAddress');
+        const allCopySegments = [];
 
-        if (elPhone) elPhone.textContent = primary.phone || data.formattedQuery || query;
-        if (elCnic) elCnic.textContent = primary.cnic || '-';
-        if (elName) elName.textContent = primary.name || 'Verified Citizen';
-        if (elOperator) elOperator.textContent = `${primary.operator || 'Network'} (${primary.city || 'Pakistan'})`;
-        if (elAddress) elAddress.textContent = primary.address || 'Address on record';
+        // Render SIM Database section if valid data exists (Case A or Case B)
+        if (hasSimData && simSection) {
+          const cardsHtml = simRecords.map((pairs, idx) => {
+            const plainLines = pairs.map(p => `${p.key}: ${p.value}`).join('\n');
+            cleanSimCopyStore.simCards[idx] = plainLines;
+            allCopySegments.push(plainLines);
 
-        // Update Text Output
-        if (outPre) outPre.textContent = data.whatsappText || data.copyText || '';
-        if (srcBadge) srcBadge.textContent = (primary.source || data.type || 'VERIFIED').toUpperCase();
-        if (titleEl) {
-          titleEl.textContent = data.type === 'phone'
-            ? `📱 SIM Person Details (${data.formattedQuery || query})`
-            : `🪪 CNIC Holder Details (${data.formattedQuery || query})`;
+            const rowsHtml = pairs.map(p => `
+              <div class="py-2 px-3 rounded-lg bg-slate-900/90 border border-slate-800/80 text-xs font-mono flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                <span class="text-cyan-400 font-bold shrink-0">${escapeSimHtml(p.key)}:</span>
+                <span class="text-slate-100 break-words">${escapeSimHtml(p.value)}</span>
+              </div>
+            `).join('');
+
+            return `
+              <div class="p-5 rounded-2xl bg-slate-950/90 border border-cyan-500/30 shadow-lg space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                    <h3 class="text-sm font-black text-white">SIM Database Record ${simRecords.length > 1 ? '#' + (idx + 1) : ''}</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onclick="copyCleanSimData('sim', this, ${idx})"
+                    class="px-3.5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>📋</span>
+                    <span>Copy Data</span>
+                  </button>
+                </div>
+                <div class="space-y-2">
+                  ${rowsHtml}
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          simSection.innerHTML = cardsHtml;
+          simSection.classList.remove('hidden');
         }
 
-        // Render HD Image Card in 2x Retina Canvas
-        renderSimHdCardCanvas(primary, 0);
+        // Case A: Both succeed -> show clean <hr> divider between sections
+        if (hasSimData && hasTcData && divider) {
+          divider.classList.remove('hidden');
+        }
 
+        // Render Truecaller section if valid data exists (Case A or Case C)
+        if (hasTcData && tcSection) {
+          const tcPlainLines = tcPairs.map(p => `${p.key}: ${p.value}`).join('\n');
+          cleanSimCopyStore.truecallerCard = tcPlainLines;
+          allCopySegments.push(tcPlainLines);
+
+          const tcRowsHtml = tcPairs.map(p => `
+            <div class="py-2 px-3 rounded-lg bg-slate-900/90 border border-slate-800/80 text-xs font-mono flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+              <span class="text-emerald-400 font-bold shrink-0">${escapeSimHtml(p.key)}:</span>
+              <span class="text-slate-100 break-words">${escapeSimHtml(p.value)}</span>
+            </div>
+          `).join('');
+
+          tcSection.innerHTML = `
+            <div class="p-5 rounded-2xl bg-slate-950/90 border border-emerald-500/30 shadow-lg space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                  <h3 class="text-sm font-black text-white">Truecaller Record</h3>
+                </div>
+                <button
+                  type="button"
+                  onclick="copyCleanSimData('truecaller', this)"
+                  class="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>📋</span>
+                  <span>Copy Data</span>
+                </button>
+              </div>
+              <div class="space-y-2">
+                ${tcRowsHtml}
+              </div>
+            </div>
+          `;
+          tcSection.classList.remove('hidden');
+        }
+
+        cleanSimCopyStore.all = allCopySegments.join('\n\n---\n\n');
+
+        // Show Master Copy header when multiple cards or both APIs succeed
+        if (masterHeader && (allCopySegments.length > 1)) {
+          masterHeader.classList.remove('hidden');
+        }
+
+        if (srcBadge) {
+          if (hasSimData && hasTcData) srcBadge.textContent = 'SIM DB + TRUECALLER';
+          else if (hasSimData) srcBadge.textContent = 'SIM DATABASE';
+          else srcBadge.textContent = 'TRUECALLER';
+        }
       } catch (err) {
-        showSimDbToast('Lookup failed: ' + err.message, true);
+        if (loadingBox) loadingBox.classList.add('hidden');
+        if (noRecordBox) noRecordBox.classList.remove('hidden');
+        if (srcBadge) srcBadge.textContent = 'NO RECORD';
+      } finally {
+        if (searchBtn) searchBtn.disabled = false;
+        if (searchBtnText) searchBtnText.textContent = 'Search SIM Data';
       }
-    }
-
-    function copySimDbResultText(mode = 'full') {
-      const outPre = document.getElementById('simDbFormattedOutput');
-      let textToCopy = outPre?.textContent || '';
-      if (mode === 'primary' && lastSimDbLookupResult?.ok) {
-        textToCopy = lastSimDbLookupResult.copyPrimaryValue || lastSimDbLookupResult.copyText || textToCopy;
-      } else if (lastSimDbLookupResult?.ok && lastSimDbLookupResult.copyText) {
-        textToCopy = lastSimDbLookupResult.copyText;
-      }
-      if (!textToCopy.includes(SIM_TINY_CAPTION)) {
-        textToCopy = `${textToCopy}\n${SIM_TINY_CAPTION}`;
-      }
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        showSimDbToast(`📋 Copied details with ${SIM_TINY_CAPTION}!`);
-      }).catch(() => {
-        prompt('Copy SIM/CNIC Details:', textToCopy);
-      });
     }
 
     async function sendSimDbResultToWhatsApp() {
