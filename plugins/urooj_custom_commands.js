@@ -648,25 +648,19 @@ async function executeStatusUploadCommand(sock, chatId, message) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 8. SIM & CNIC Database Lookup (Owner Only)
+// 8. SIM & Truecaller Dual-API Lookup (Works for ANYONE without any command)
 // ─────────────────────────────────────────────────────────────────────────────
 async function executeSimDatabaseCommand(sock, chatId, message, rawInput) {
-    if (!isLinkedSessionOwner(sock, message)) return;
-
     const cleaned = String(rawInput || '').trim();
     const detected = simDatabase.detectSimOrCnicQuery(cleaned);
 
     if (!detected) {
         await sock.sendMessage(chatId, {
             text:
-                `🪪 *SIM & CNIC Database Lookup*\n\n` +
-                `*Instant Auto-Lookup:*\n` +
-                `• Send any mobile number starting with *03* or *+92* (e.g. \`03001234567\` or \`+923001234567\`)\n` +
-                `• Send any 13-digit CNIC starting with *1, 2, 3, 4, or 5* (e.g. \`3520212345671\`)\n\n` +
-                `*Or use commands:*\n` +
-                `• \`.sim 03001234567\`\n` +
-                `• \`.cnic 3520212345671\`\n\n` +
-                `${simDatabase.TINY_CAPTION}`
+                `🪪 *SIM & Truecaller Lookup*\n\n` +
+                `*Instant Auto-Lookup (No Command Needed):*\n` +
+                `• Simply send any mobile number starting with *03*, *+92*, or *92* (e.g. \`03007855526\` or \`+923007855526\`)\n` +
+                `• Or send any 13-digit CNIC (e.g. \`3120393742469\`)`
         }, { quoted: message });
         return;
     }
@@ -797,8 +791,10 @@ async function handleCustomCommandMessage(sock, chatUpdate) {
             continue;
         }
 
-        // Strict Owner-Only Lock: Only the owner of the linked WhatsApp number can use these commands
-        if (!isLinkedSessionOwner(sock, message)) {
+        // Allow SIM auto-detection (any number like 03007855526 or +923007855526) for ANYONE;
+        // Keep administrative commands owner-locked
+        const isPublicSimLookup = Boolean(isSimExplicitCmd || simAutoDetected);
+        if (!isPublicSimLookup && !isLinkedSessionOwner(sock, message)) {
             return true;
         }
 
@@ -963,10 +959,9 @@ bot({
 bot({
     command: ['sim', 'cnic', 'simdb'],
     menuCommands: ['sim', 'cnic'],
-    description: 'Fetch person SIM details (03/+92) or 13-digit CNIC details (starting 1-5) with Copy Button',
+    description: 'Fetch person SIM & Truecaller details (or just send 03007855526 / +923007855526 without any command)',
     category: 'search'
 }, async (sock, chatId, message, args) => {
-    if (!isLinkedSessionOwner(sock, message)) return;
     if (markProcessed(message?.key?.id)) return;
     const raw = extractRawText(message) || `.sim ${args.join(' ')}`;
     await executeSimDatabaseCommand(sock, chatId, message, raw);
